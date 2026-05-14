@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
+import { geoMercator, geoPath } from "d3-geo";
+import { feature } from "topojson-client";
+import worldData from "world-atlas/countries-110m.json";
+
+// ─── Map projection (matches latLngToXY exactly: scale = 1000 / 2π) ──────────
+const _proj = geoMercator().scale(1000 / (2 * Math.PI)).translate([500, 250]).center([0, 0]);
+const _path = geoPath(_proj);
+const _countries = feature(worldData, worldData.objects.countries).features;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -73,12 +81,15 @@ function AuthScreen() {
   const submit = async () => {
     if (!email.trim() || !password.trim()) return;
     setLoading(true); setError(""); setMsg("");
-    const { error } = mode === "login"
-      ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
-      : await supabase.auth.signUp({ email: email.trim(), password });
-    if (error) setError(error.message);
-    else if (mode === "signup") setMsg("Check your email to confirm, then sign in.");
-    setLoading(false);
+    try {
+      const { error } = mode === "login"
+        ? await supabase.auth.signInWithPassword({ email: email.trim(), password })
+        : await supabase.auth.signUp({ email: email.trim(), password });
+      if (error) setError(error.message);
+      else if (mode === "signup") setMsg("Check your email to confirm, then sign in.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const ready = email.trim() && password.trim() && !loading;
@@ -109,8 +120,8 @@ function AuthScreen() {
         {error && <div style={{ marginBottom:16, fontSize:11, color:"#ef4444", padding:"8px 10px", background:"#ef444411", borderRadius:5, border:"1px solid #ef444430" }}>{error}</div>}
         {msg   && <div style={{ marginBottom:16, fontSize:11, color:"#22c55e", padding:"8px 10px", background:"#22c55e11", borderRadius:5, border:"1px solid #22c55e30" }}>{msg}</div>}
 
-        <button onClick={submit} disabled={!ready}
-          style={{ width:"100%", padding:"14px", background:ready?"#f97316":"#0f172a", color:ready?"#fff":"#334155", border:"none", borderRadius:6, fontFamily:"'Bebas Neue'", fontSize:18, letterSpacing:4, cursor:ready?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:ready?"0 0 24px #f9731655":"none", marginBottom:16 }}>
+        <button onClick={submit}
+          style={{ width:"100%", padding:"14px", background:ready?"#f97316":"#0f172a", color:ready?"#fff":"#334155", border:"none", borderRadius:6, fontFamily:"'Bebas Neue'", fontSize:18, letterSpacing:4, cursor:"pointer", transition:"all 0.2s", boxShadow:ready?"0 0 24px #f9731655":"none", marginBottom:16 }}>
           {loading ? "..." : mode==="login" ? "SIGN IN" : "CREATE ACCOUNT"}
         </button>
 
@@ -400,21 +411,9 @@ export default function App() {
             {[...Array(9)].map((_,i)=><line key={`v${i}`} x1={(i+1)*100} y1="0" x2={(i+1)*100} y2="500" stroke="#0d1a2b" strokeWidth="0.7"/>)}
             {[...Array(5)].map((_,i)=><line key={`h${i}`} x1="0" y1={(i+1)*83} x2="1000" y2={(i+1)*83} stroke="#0d1a2b" strokeWidth="0.7"/>)}
             <line x1="0" y1="250" x2="1000" y2="250" stroke="#111f33" strokeWidth="1"/>
-            <path d="M 95,60 L 175,55 L 200,70 L 210,100 L 195,115 L 220,130 L 235,155 L 215,175 L 200,185 L 175,190 L 160,210 L 145,230 L 130,245 L 115,240 L 105,220 L 90,200 L 85,175 L 75,155 L 70,130 L 80,105 L 85,80 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 145,230 L 160,210 L 175,215 L 170,235 L 158,248 L 150,255 L 145,245 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 155,255 L 175,250 L 205,255 L 225,275 L 235,310 L 240,350 L 225,390 L 200,415 L 175,420 L 155,400 L 140,370 L 135,335 L 140,295 L 150,270 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 440,70 L 465,65 L 490,68 L 505,80 L 510,95 L 495,105 L 480,110 L 460,108 L 445,100 L 435,88 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 455,50 L 470,45 L 480,55 L 472,70 L 460,68 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 448,75 L 455,72 L 458,80 L 453,85 L 448,82 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 445,145 L 475,138 L 510,142 L 530,165 L 535,205 L 530,250 L 515,295 L 495,335 L 475,350 L 455,345 L 435,310 L 425,265 L 420,220 L 425,175 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 510,95 L 545,90 L 565,105 L 570,125 L 555,140 L 530,142 L 510,130 L 505,112 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 490,50 L 560,40 L 650,38 L 730,45 L 790,55 L 820,70 L 800,90 L 760,100 L 720,108 L 680,112 L 640,115 L 600,120 L 570,125 L 545,118 L 520,110 L 505,95 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 600,120 L 640,115 L 660,130 L 665,155 L 650,175 L 630,180 L 610,165 L 600,145 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 700,130 L 730,125 L 755,135 L 760,155 L 745,168 L 720,165 L 705,150 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 660,95 L 710,88 L 740,95 L 755,115 L 750,135 L 720,138 L 690,135 L 665,125 L 655,108 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 775,100 L 785,95 L 792,105 L 786,115 L 778,112 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 720,300 L 770,290 L 820,300 L 845,325 L 840,360 L 815,380 L 775,385 L 740,370 L 718,345 L 715,315 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
-            <path d="M 195,25 L 225,20 L 245,30 L 240,50 L 218,58 L 198,48 Z" fill="#0f1e33" stroke="#1a3a5c" strokeWidth="0.8"/>
+            {_countries.map((feat, i) => (
+              <path key={i} d={_path(feat)} fill="#0f1e33" stroke="#1a3a5c" strokeWidth={0.5} />
+            ))}
             <text x="500" y="493" textAnchor="middle" fill="#0d1a2b" fontSize="8" fontFamily="'DM Mono', monospace" letterSpacing="4">CLICK TO DROP A PIN</text>
           </svg>
 
