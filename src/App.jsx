@@ -586,7 +586,7 @@ export default function App() {
         :root {
           --bg:#dde2e9; --panel:#ebedf1; --hover:#d7dee8; --input:#e3e7ec;
           --border:#ced6e1; --border-muted:#a7b4ca; --label-dim:#9daac0;
-          --text-muted:#7686a0; --text-body:#5d6d86; --text-prominent:#4b5c7d;
+          --text-muted:#5f7089; --text-body:#4c5b76; --text-prominent:#4b5c7d;
           --text-primary:#1d2a44; --text-bright:#121c2d; --text-subtitle:#7e8fa7;
           --ghost-border:#b8c1d1; --bg-very-dim:#dfe2e9; --bg-disabled:#d7dce4;
           --divider:#d4dae3; --chip-bg:#ebedf1cc; --badge-bg:#ced6e122; --badge-border:#9daac033;
@@ -594,7 +594,7 @@ export default function App() {
         [data-theme="dark"] {
           --bg:#191f2b; --panel:#1a2332; --hover:#1f2c3f; --input:#1f283c;
           --border:#2c384a; --border-muted:#2c4669; --label-dim:#38465a;
-          --text-muted:#4b596d; --text-body:#66768c; --text-prominent:#92a1b6;
+          --text-muted:#8291a6; --text-body:#96a4b8; --text-prominent:#92a1b6;
           --text-primary:#dbe1ea; --text-bright:#e9eef3; --text-subtitle:#c5d0dc;
           --ghost-border:#1e2b3d; --bg-very-dim:#1b212f; --bg-disabled:#1b2333;
           --divider:#1c2433; --chip-bg:#1a2332cc; --badge-bg:#2c384a22; --badge-border:#38465a33;
@@ -652,15 +652,15 @@ export default function App() {
           <span style={{ fontSize:11, color:"var(--text-prominent)" }}>{me.name}</span>
           <span style={{ fontSize:9, color:me.pos==="toast"?"#ff6c2f":"var(--text-prominent)", background:me.pos==="toast"?"#ff6c2f18":"var(--border)", border:`1px solid ${me.pos==="toast"?"#ff6c2f44":"var(--label-dim)"}`, borderRadius:4, padding:"1px 6px", letterSpacing:1 }}>{me.pos==="toast"?"TOAST":"SQUARE"}</span>
           <span style={{ fontSize:10, color:"var(--border)" }}>·</span>
-          <span style={{ fontSize:10, color:"var(--label-dim)" }}>
+          <span style={{ fontSize:10, color:"var(--text-muted)" }}>
             {myPins.filter(p=>p.type==="worked").length}▼ {myPins.filter(p=>p.type==="layover").length}● {myPins.filter(p=>p.type==="remote").length}◆
           </span>
           <button onClick={()=>setTheme(t => t === "dark" ? "light" : "dark")} title={theme==="dark" ? "Switch to light mode" : "Switch to dark mode"}
-            style={{ marginLeft:4, background:"none", border:"1px solid var(--hover)", color:"var(--border-muted)", cursor:"pointer", fontSize:9, fontFamily:"'DM Mono'", letterSpacing:1, borderRadius:4, padding:"3px 8px", display:"flex", alignItems:"center", gap:5 }}>
+            style={{ marginLeft:4, background:"none", border:"1px solid var(--hover)", color:"var(--text-muted)", cursor:"pointer", fontSize:9, fontFamily:"'DM Mono'", letterSpacing:1, borderRadius:4, padding:"3px 8px", display:"flex", alignItems:"center", gap:5 }}>
             {theme==="dark" ? "☀ LIGHT" : "☾ DARK"}
           </button>
           <button onClick={()=>supabase.auth.signOut()}
-            style={{ marginLeft:0, background:"none", border:"1px solid var(--hover)", color:"var(--border-muted)", cursor:"pointer", fontSize:9, fontFamily:"'DM Mono'", letterSpacing:1, borderRadius:4, padding:"3px 8px" }}>
+            style={{ marginLeft:0, background:"none", border:"1px solid var(--hover)", color:"var(--text-muted)", cursor:"pointer", fontSize:9, fontFamily:"'DM Mono'", letterSpacing:1, borderRadius:4, padding:"3px 8px" }}>
             SIGN OUT
           </button>
         </div>
@@ -722,12 +722,12 @@ export default function App() {
                       <PinShape shape={t.shape} color={color} size={12} />
                     </div>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:12, color:"var(--text-subtitle)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.city}</div>
-                      <div style={{ fontSize:9, color:"var(--border-muted)", letterSpacing:1 }}>
+                      <div style={{ fontSize:12, color:"var(--text-prominent)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.city}</div>
+                      <div style={{ fontSize:9, color:"var(--text-body)", letterSpacing:1 }}>
                         {t.label.toUpperCase()} · {pin.date}
                         {teamView&&!isMe&&<span style={{ color:color+"cc", marginLeft:4 }}>· {owner.name}</span>}
                       </div>
-                      {pin.note&&<div style={{ fontSize:10, color:"var(--label-dim)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.note}</div>}
+                      {pin.note&&<div style={{ fontSize:10, color:"var(--text-body)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.note}</div>}
                     </div>
                     {isMe && (
                       <button className="del-btn" onClick={()=>handleDelete(pin.id)}
@@ -750,9 +750,9 @@ export default function App() {
                 <input placeholder="Any city, town, or address..." value={search} onChange={e=>handleSearchChange(e.target.value)} />
                 {(searching || searchResults.length > 0) && (
                   <div style={{ position:"absolute", top:"100%", left:0, right:0, marginTop:4, background:"var(--input)", border:"1px solid var(--border)", borderRadius:6, zIndex:60, maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}>
-                    {searching && <div style={{ padding:"8px 10px", fontSize:10, color:"var(--label-dim)" }}>searching...</div>}
+                    {searching && <div style={{ padding:"8px 10px", fontSize:10, color:"var(--text-muted)" }}>searching...</div>}
                     {!searching && searchResults.length === 0 && search.trim().length >= 3 && (
-                      <div style={{ padding:"8px 10px", fontSize:10, color:"var(--label-dim)" }}>no matches</div>
+                      <div style={{ padding:"8px 10px", fontSize:10, color:"var(--text-muted)" }}>no matches</div>
                     )}
                     {!searching && searchResults.map((r, i) => (
                       <button key={i} onClick={()=>pickSearchResult(r)}
@@ -760,7 +760,7 @@ export default function App() {
                         onMouseEnter={e=>e.currentTarget.style.background="var(--hover)"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
                         <div style={{ fontSize:11, color:"var(--text-primary)" }}>{shortLabel(r)}</div>
-                        <div style={{ fontSize:9, color:"var(--label-dim)", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.display_name}</div>
+                        <div style={{ fontSize:9, color:"var(--text-muted)", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.display_name}</div>
                       </button>
                     ))}
                   </div>
@@ -790,7 +790,7 @@ export default function App() {
                 style={{ padding:"11px", background:dropping&&form.city.trim()?me.color:"var(--bg-disabled)", color:dropping&&form.city.trim()?"#fff":"var(--border)", border:"none", borderRadius:5, fontFamily:"'Bebas Neue'", fontSize:15, letterSpacing:3, cursor:dropping&&form.city.trim()?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:dropping&&form.city.trim()?`0 0 18px ${me.color}55`:"none" }}>
                 DROP PIN
               </button>
-              {!dropping&&<div style={{ fontSize:9, color:"var(--label-dim)", textAlign:"center" }}>search a place or click the map first</div>}
+              {!dropping&&<div style={{ fontSize:9, color:"var(--text-muted)", textAlign:"center" }}>search a place or click the map first</div>}
             </div>
           )}
 
@@ -808,11 +808,11 @@ export default function App() {
                     <div style={{ fontSize:12, color:u.uid===me.id?u.color:"var(--text-prominent)" }}>{u.name}{u.uid===me.id&&" (you)"}</div>
                     <span style={{ fontSize:8, color:u.pos==="toast"?"#ff6c2f":"var(--text-prominent)", background:u.pos==="toast"?"#ff6c2f18":"var(--badge-bg)", border:`1px solid ${u.pos==="toast"?"#ff6c2f33":"var(--badge-border)"}`, borderRadius:3, padding:"1px 5px", letterSpacing:1 }}>{u.pos==="square"?"SQ":"🍞"}</span>
                     <div style={{ flex:1 }} />
-                    <div style={{ fontSize:10, color:"var(--label-dim)" }}>{u.total} pins</div>
+                    <div style={{ fontSize:10, color:"var(--text-body)" }}>{u.total} pins</div>
                   </div>
                   <div style={{ display:"flex", gap:12, paddingLeft:23 }}>
                     {[["worked","▼"],["layover","●"],["remote","◆"]].map(([k,sym])=>(
-                      <div key={k} style={{ fontSize:10, color:"var(--label-dim)" }}>
+                      <div key={k} style={{ fontSize:10, color:"var(--text-body)" }}>
                         <span style={{ color:u.color, marginRight:3 }}>{sym}</span>{u[k]}
                       </div>
                     ))}
@@ -824,7 +824,7 @@ export default function App() {
                 {Object.entries(PIN_TYPES).map(([key,val])=>(
                   <div key={key} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
                     <PinShape shape={val.shape} color="var(--label-dim)" size={12} />
-                    <span style={{ fontSize:10, color:"var(--label-dim)" }}>{val.label}</span>
+                    <span style={{ fontSize:10, color:"var(--text-body)" }}>{val.label}</span>
                   </div>
                 ))}
               </div>
