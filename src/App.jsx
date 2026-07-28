@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -225,8 +226,8 @@ export default function App() {
   const [searching, setSearching]   = useState(false);
   const [renderTick, setRenderTick] = useState(0); // bumped on leaflet pan/zoom to reposition pin overlay
   const [positions, setPositions]   = useState({}); // pin id -> {x,y} in container pixels, plus __dropping
-  const mapRef       = useRef(null); // DOM node leaflet mounts into
   const leafletRef   = useRef(null); // leaflet Map instance
+  const cleanupRef   = useRef(null); // teardown for the current map instance
   const searchTimer  = useRef(null);
 
   // ── Auth listener ─────────────────────────────────────────────────────────
@@ -296,10 +297,26 @@ export default function App() {
 
   // ── Leaflet map init (real tiles: every city, town, and back road, all the
   //    way down to street level — no more blank vector states) ──────────────
-  useEffect(() => {
-    if (!mapRef.current || leafletRef.current) return;
+  //
+  // This is a callback ref, not a useEffect — it fires the instant the map's
+  // <div> is actually attached to the page. A plain effect with an empty
+  // dependency array only runs once, right after the very FIRST paint —
+  // which for a logged-in user is still the "checking session..." loading
+  // screen, before the map div exists at all. That was the original bug:
+  // the map was never created because its container wasn't there yet on
+  // the one render this ran on.
+  const initMapNode = useCallback((node) => {
+    if (!node) {
+      // Element is being removed from the page — tear down cleanly.
+      cleanupRef.current?.();
+      cleanupRef.current = null;
+      leafletRef.current?.remove();
+      leafletRef.current = null;
+      return;
+    }
+    if (leafletRef.current) return; // already initialized
 
-    const map = L.map(mapRef.current, {
+    const map = L.map(node, {
       center: [39, -98],
       zoom: 4,
       minZoom: 3,
@@ -328,22 +345,16 @@ export default function App() {
     leafletRef.current = map;
     bump();
 
-    // Leaflet sometimes measures its container as 0×0 the instant it's
-    // created inside a flex layout, which bakes in a broken tile grid
-    // until something tells it to re-measure. Force that re-measure now,
-    // shortly after (once layout has definitely settled), and any time
-    // the container's actual size changes (e.g. window resize).
+    // Belt-and-suspenders: re-measure shortly after mount and on any
+    // container resize, in case layout hadn't fully settled yet.
     map.invalidateSize();
     const settleTimer = setTimeout(() => map.invalidateSize(), 150);
-
     const resizeObserver = new ResizeObserver(() => map.invalidateSize());
-    resizeObserver.observe(mapRef.current);
+    resizeObserver.observe(node);
 
-    return () => {
+    cleanupRef.current = () => {
       clearTimeout(settleTimer);
       resizeObserver.disconnect();
-      map.remove();
-      leafletRef.current = null;
     };
   }, []);
 
@@ -508,7 +519,7 @@ export default function App() {
         <div style={{ flex:1, position:"relative", overflow:"hidden" }}>
 
           {/* Leaflet mounts here — real tiles, every town and back road, native pan/zoom */}
-          <div ref={mapRef} style={{ position:"absolute", inset:0 }} />
+          <div ref={initMapNode} style={{ position:"absolute", inset:0 }} />
 
           {/* Overlay layer: our own pins, hover cards, drop cursor — positioned via leaflet's projection */}
           <div style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:15 }}>
