@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
 import L from "leaflet";
@@ -88,39 +87,39 @@ function AuthScreen() {
   const ready = email.trim() && password.trim() && !loading;
 
   return (
-    <div style={{ minHeight:"100vh", background:"#080c16", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Mono', monospace" }}>
+    <div style={{ minHeight:"100vh", background:"#eef1f6", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Mono', monospace" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');`}</style>
       <div style={{ width:360, padding:40 }}>
-        <div style={{ fontFamily:"'Bebas Neue'", fontSize:44, letterSpacing:6, color:"#f1f5f9", lineHeight:1, marginBottom:4 }}>CREW MAP</div>
-        <div style={{ fontSize:10, color:"#334155", letterSpacing:3, marginBottom:40 }}>APOS JOB TRACKER</div>
+        <div style={{ fontFamily:"'Bebas Neue'", fontSize:44, letterSpacing:6, color:"#0a1424", lineHeight:1, marginBottom:4 }}>CREW MAP</div>
+        <div style={{ fontSize:10, color:"#9facc2", letterSpacing:3, marginBottom:40 }}>APOS JOB TRACKER</div>
 
         <div style={{ marginBottom:16 }}>
-          <div style={{ fontSize:10, color:"#475569", letterSpacing:2, marginBottom:8 }}>EMAIL</div>
+          <div style={{ fontSize:10, color:"#7686a0", letterSpacing:2, marginBottom:8 }}>EMAIL</div>
           <input type="email" value={email} onChange={e=>setEmail(e.target.value)}
             placeholder="you@example.com" autoFocus
             onKeyDown={e=>e.key==="Enter"&&submit()}
-            style={{ width:"100%", background:"#0f172a", border:"1px solid #1e293b", color:"#e2e8f0", borderRadius:6, padding:"12px 14px", fontFamily:"'DM Mono'", fontSize:13, outline:"none" }} />
+            style={{ width:"100%", background:"#f5f7fa", border:"1px solid #dce3ec", color:"#16233d", borderRadius:6, padding:"12px 14px", fontFamily:"'DM Mono'", fontSize:13, outline:"none" }} />
         </div>
 
         <div style={{ marginBottom:28 }}>
-          <div style={{ fontSize:10, color:"#475569", letterSpacing:2, marginBottom:8 }}>PASSWORD</div>
+          <div style={{ fontSize:10, color:"#7686a0", letterSpacing:2, marginBottom:8 }}>PASSWORD</div>
           <input type="password" value={password} onChange={e=>setPassword(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&submit()}
             placeholder="••••••••"
-            style={{ width:"100%", background:"#0f172a", border:"1px solid #1e293b", color:"#e2e8f0", borderRadius:6, padding:"12px 14px", fontFamily:"'DM Mono'", fontSize:13, outline:"none" }} />
+            style={{ width:"100%", background:"#f5f7fa", border:"1px solid #dce3ec", color:"#16233d", borderRadius:6, padding:"12px 14px", fontFamily:"'DM Mono'", fontSize:13, outline:"none" }} />
         </div>
 
         {error && <div style={{ marginBottom:16, fontSize:11, color:"#ef4444", padding:"8px 10px", background:"#ef444411", borderRadius:5, border:"1px solid #ef444430" }}>{error}</div>}
         {msg   && <div style={{ marginBottom:16, fontSize:11, color:"#22c55e", padding:"8px 10px", background:"#22c55e11", borderRadius:5, border:"1px solid #22c55e30" }}>{msg}</div>}
 
         <button onClick={submit}
-          style={{ width:"100%", padding:"14px", background:ready?"#f97316":"#0f172a", color:ready?"#fff":"#334155", border:"none", borderRadius:6, fontFamily:"'Bebas Neue'", fontSize:18, letterSpacing:4, cursor:"pointer", transition:"all 0.2s", boxShadow:ready?"0 0 24px #f9731655":"none", marginBottom:16 }}>
+          style={{ width:"100%", padding:"14px", background:ready?"#f97316":"#f5f7fa", color:ready?"#fff":"#9facc2", border:"none", borderRadius:6, fontFamily:"'Bebas Neue'", fontSize:18, letterSpacing:4, cursor:"pointer", transition:"all 0.2s", boxShadow:ready?"0 0 24px #f9731655":"none", marginBottom:16 }}>
           {loading ? "..." : mode==="login" ? "SIGN IN" : "CREATE ACCOUNT"}
         </button>
 
         <div style={{ textAlign:"center" }}>
           <button onClick={()=>{ setMode(m=>m==="login"?"signup":"login"); setError(""); setMsg(""); }}
-            style={{ background:"none", border:"none", color:"#334155", cursor:"pointer", fontSize:10, fontFamily:"'DM Mono'", letterSpacing:1 }}>
+            style={{ background:"none", border:"none", color:"#9facc2", cursor:"pointer", fontSize:10, fontFamily:"'DM Mono'", letterSpacing:1 }}>
             {mode==="login" ? "No account? Sign up →" : "Have an account? Sign in →"}
           </button>
         </div>
@@ -137,23 +136,23 @@ function SetupScreen({ onComplete }) {
   const [pos, setPos]     = useState("toast");
 
   return (
-    <div style={{ minHeight:"100vh", background:"#080c16", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Mono', monospace" }}>
+    <div style={{ minHeight:"100vh", background:"#eef1f6", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'DM Mono', monospace" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');`}</style>
       <div style={{ width:360, padding:40 }}>
-        <div style={{ fontFamily:"'Bebas Neue'", fontSize:44, letterSpacing:6, color:"#f1f5f9", lineHeight:1, marginBottom:4 }}>CREW MAP</div>
-        <div style={{ fontSize:10, color:"#334155", letterSpacing:3, marginBottom:40 }}>APOS JOB TRACKER</div>
+        <div style={{ fontFamily:"'Bebas Neue'", fontSize:44, letterSpacing:6, color:"#0a1424", lineHeight:1, marginBottom:4 }}>CREW MAP</div>
+        <div style={{ fontSize:10, color:"#9facc2", letterSpacing:3, marginBottom:40 }}>APOS JOB TRACKER</div>
 
         <div style={{ marginBottom:20 }}>
-          <div style={{ fontSize:10, color:"#475569", letterSpacing:2, marginBottom:8 }}>YOUR NAME</div>
+          <div style={{ fontSize:10, color:"#7686a0", letterSpacing:2, marginBottom:8 }}>YOUR NAME</div>
           <input value={name} onChange={e=>setName(e.target.value)}
             onKeyDown={e=>e.key==="Enter"&&name.trim()&&onComplete({name:name.trim(),color,pos})}
             placeholder="First name or nickname"
-            style={{ width:"100%", background:"#0f172a", border:"1px solid #1e293b", color:"#e2e8f0", borderRadius:6, padding:"12px 14px", fontFamily:"'DM Mono'", fontSize:13, outline:"none" }}
+            style={{ width:"100%", background:"#f5f7fa", border:"1px solid #dce3ec", color:"#16233d", borderRadius:6, padding:"12px 14px", fontFamily:"'DM Mono'", fontSize:13, outline:"none" }}
             autoFocus />
         </div>
 
         <div style={{ marginBottom:36 }}>
-          <div style={{ fontSize:10, color:"#475569", letterSpacing:2, marginBottom:12 }}>YOUR COLOR</div>
+          <div style={{ fontSize:10, color:"#7686a0", letterSpacing:2, marginBottom:12 }}>YOUR COLOR</div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:14 }}>
             {TEAM_COLORS.map((c,i) => (
               <div key={c} onClick={()=>setColor(c)} title={COLOR_NAMES[i]} style={{
@@ -174,25 +173,25 @@ function SetupScreen({ onComplete }) {
                 style={{ position:"absolute", opacity:0, width:1, height:1, pointerEvents:"none", top:0, left:0 }} />
             </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:9, color:"#334155", letterSpacing:1, marginBottom:5 }}>CUSTOM HEX</div>
+              <div style={{ fontSize:9, color:"#9facc2", letterSpacing:1, marginBottom:5 }}>CUSTOM HEX</div>
               <input
                 value={color}
                 onChange={e=>{ const v=e.target.value; if(/^#[0-9a-fA-F]{0,6}$/.test(v)) setColor(v); }}
                 placeholder="#f97316" maxLength={7}
-                style={{ background:"#0a0e1b", border:`1px solid ${color.length===7?color+"55":"#1e293b"}`, color:color.length===7?color:"#475569", borderRadius:4, padding:"6px 10px", fontFamily:"'DM Mono'", fontSize:12, width:"100%", outline:"none", letterSpacing:2 }} />
+                style={{ background:"#f0f2f6", border:`1px solid ${color.length===7?color+"55":"#dce3ec"}`, color:color.length===7?color:"#7686a0", borderRadius:4, padding:"6px 10px", fontFamily:"'DM Mono'", fontSize:12, width:"100%", outline:"none", letterSpacing:2 }} />
             </div>
           </div>
-          <div style={{ fontSize:10, color:color.length===7?color:"#334155", marginTop:8, letterSpacing:1 }}>
+          <div style={{ fontSize:10, color:color.length===7?color:"#9facc2", marginTop:8, letterSpacing:1 }}>
             {color.length===7 ? "● color preview" : "enter a valid hex code"}
           </div>
         </div>
 
         <div style={{ marginBottom:28 }}>
-          <div style={{ fontSize:10, color:"#475569", letterSpacing:2, marginBottom:12 }}>POS PARTNER</div>
+          <div style={{ fontSize:10, color:"#7686a0", letterSpacing:2, marginBottom:12 }}>POS PARTNER</div>
           <div style={{ display:"flex", gap:8 }}>
-            {[["toast","Toast","#ff6c2f"],["square","Square","#e2e8f0"]].map(([key,label,accent])=>(
+            {[["toast","Toast","#ff6c2f"],["square","Square","#16233d"]].map(([key,label,accent])=>(
               <button key={key} onClick={()=>setPos(key)}
-                style={{ flex:1, padding:"12px 8px", background:pos===key?accent+"18":"#0a0e1b", border:`2px solid ${pos===key?accent:"#1e293b"}`, borderRadius:8, cursor:"pointer", fontFamily:"'Bebas Neue'", fontSize:16, letterSpacing:3, color:pos===key?accent:"#334155", transition:"all 0.2s", boxShadow:pos===key?`0 0 16px ${accent}33`:"none" }}>
+                style={{ flex:1, padding:"12px 8px", background:pos===key?accent+"18":"#f0f2f6", border:`2px solid ${pos===key?accent:"#dce3ec"}`, borderRadius:8, cursor:"pointer", fontFamily:"'Bebas Neue'", fontSize:16, letterSpacing:3, color:pos===key?accent:"#9facc2", transition:"all 0.2s", boxShadow:pos===key?`0 0 16px ${accent}33`:"none" }}>
                 {label}
               </button>
             ))}
@@ -200,7 +199,7 @@ function SetupScreen({ onComplete }) {
         </div>
 
         <button onClick={()=>name.trim()&&onComplete({name:name.trim(),color,pos})} disabled={!name.trim()}
-          style={{ width:"100%", padding:"14px", background:name.trim()?color:"#0f172a", color:name.trim()?"#fff":"#334155", border:"none", borderRadius:6, fontFamily:"'Bebas Neue'", fontSize:18, letterSpacing:4, cursor:name.trim()?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:name.trim()?`0 0 24px ${color}55`:"none" }}>
+          style={{ width:"100%", padding:"14px", background:name.trim()?color:"#f5f7fa", color:name.trim()?"#fff":"#9facc2", border:"none", borderRadius:6, fontFamily:"'Bebas Neue'", fontSize:18, letterSpacing:4, cursor:name.trim()?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:name.trim()?`0 0 24px ${color}55`:"none" }}>
           PLANT YOUR FLAG
         </button>
       </div>
@@ -325,7 +324,7 @@ export default function App() {
       worldCopyJump: true,
     });
 
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: "abcd",
       maxZoom: 20,
@@ -417,7 +416,7 @@ export default function App() {
 
   const leaderboard = [...new Set(pins.map(p => p.userId))].map(uid => {
     const uPins = pins.filter(p => p.userId === uid);
-    const u = users[uid] || { name:uid, color:"#94a3b8" };
+    const u = users[uid] || { name:uid, color:"#47597a" };
     return { ...u, uid, total:uPins.length, worked:uPins.filter(p=>p.type==="worked").length, layover:uPins.filter(p=>p.type==="layover").length, remote:uPins.filter(p=>p.type==="remote").length };
   }).sort((a,b) => b.worked - a.worked);
 
@@ -442,9 +441,9 @@ export default function App() {
   // ── Render gates ──────────────────────────────────────────────────────────
 
   if (session === undefined) return (
-    <div style={{ minHeight:"100vh", background:"#080c16", display:"flex", alignItems:"center", justifyContent:"center" }}>
+    <div style={{ minHeight:"100vh", background:"#eef1f6", display:"flex", alignItems:"center", justifyContent:"center" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');`}</style>
-      <div style={{ fontFamily:"'Bebas Neue'", fontSize:28, letterSpacing:6, color:"#0f1c2e" }}>CREW MAP</div>
+      <div style={{ fontFamily:"'Bebas Neue'", fontSize:28, letterSpacing:6, color:"#e7edf5" }}>CREW MAP</div>
     </div>
   );
 
@@ -454,20 +453,20 @@ export default function App() {
   // ── Main UI ───────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ fontFamily:"'DM Mono', monospace", background:"#080c16", color:"#e2e8f0", height:"100vh", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+    <div style={{ fontFamily:"'DM Mono', monospace", background:"#eef1f6", color:"#16233d", height:"100vh", display:"flex", flexDirection:"column", overflow:"hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
         * { box-sizing:border-box; margin:0; padding:0; }
         ::-webkit-scrollbar { width:3px; }
-        ::-webkit-scrollbar-thumb { background:#1e293b; border-radius:2px; }
+        ::-webkit-scrollbar-thumb { background:#dce3ec; border-radius:2px; }
         .map-pin { transition:transform 0.15s ease; cursor:pointer; }
         .map-pin:hover { transform:scale(1.4) translateY(-2px); }
         .pin-pop { animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
         @keyframes popIn { from { transform:scale(0) translateY(8px); opacity:0; } to { transform:scale(1); opacity:1; } }
         .pulse { animation:pulse 1.8s infinite; }
         @keyframes pulse { 0%,100% { opacity:1; transform:translate(-50%,-50%) scale(1); } 50% { opacity:0.4; transform:translate(-50%,-50%) scale(1.4); } }
-        input, textarea { background:#0f172a; border:1px solid #1e293b; color:#e2e8f0; border-radius:5px; padding:8px 10px; font-family:'DM Mono',monospace; font-size:12px; width:100%; outline:none; }
-        input:focus, textarea:focus { border-color:#334155; }
+        input, textarea { background:#f5f7fa; border:1px solid #dce3ec; color:#16233d; border-radius:5px; padding:8px 10px; font-family:'DM Mono',monospace; font-size:12px; width:100%; outline:none; }
+        input:focus, textarea:focus { border-color:#9facc2; }
         textarea { resize:none; height:56px; }
         .del-btn { opacity:0; transition:opacity 0.15s; }
         .pin-row:hover .del-btn { opacity:1; }
@@ -475,38 +474,38 @@ export default function App() {
         .cat-btn:hover { opacity:0.85; }
 
         /* Leaflet chrome, restyled to match the dark crew-map theme */
-        .leaflet-container { background:#09111f; font-family:'DM Mono', monospace; cursor:crosshair; }
-        .leaflet-control-zoom { border:1px solid #1e293b !important; box-shadow:none !important; }
-        .leaflet-control-zoom a { background:#09111f !important; color:#475569 !important; border-color:#1e293b !important; }
-        .leaflet-control-zoom a:hover { background:#0f1c2e !important; color:#94a3b8 !important; }
-        .leaflet-control-attribution { background:#080c16cc !important; color:#334155 !important; font-size:9px !important; }
-        .leaflet-control-attribution a { color:#475569 !important; }
+        .leaflet-container { background:#ffffff; font-family:'DM Mono', monospace; cursor:crosshair; }
+        .leaflet-control-zoom { border:1px solid #dce3ec !important; box-shadow:none !important; }
+        .leaflet-control-zoom a { background:#ffffff !important; color:#7686a0 !important; border-color:#dce3ec !important; }
+        .leaflet-control-zoom a:hover { background:#e7edf5 !important; color:#47597a !important; }
+        .leaflet-control-attribution { background:#eef1f6cc !important; color:#9facc2 !important; font-size:9px !important; }
+        .leaflet-control-attribution a { color:#7686a0 !important; }
       `}</style>
 
       {/* ── Header ── */}
-      <div style={{ background:"#09111f", borderBottom:"1px solid #0f1c2e", padding:"9px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+      <div style={{ background:"#ffffff", borderBottom:"1px solid #e7edf5", padding:"9px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue'", fontSize:20, letterSpacing:4, color:"#f1f5f9" }}>CREW MAP</div>
-          <div style={{ fontSize:9, color:"#1e3a5f", letterSpacing:2 }}>APOS JOB TRACKER</div>
+          <div style={{ fontFamily:"'Bebas Neue'", fontSize:20, letterSpacing:4, color:"#0a1424" }}>CREW MAP</div>
+          <div style={{ fontSize:9, color:"#afbcd1", letterSpacing:2 }}>APOS JOB TRACKER</div>
         </div>
 
-        <div onClick={()=>setTeamView(v=>!v)} style={{ display:"flex", alignItems:"center", gap:7, cursor:"pointer", background:teamView?"#0f1c2e":"transparent", border:`1px solid ${teamView?"#1e3a5f":"#0f1c2e"}`, borderRadius:20, padding:"5px 12px", marginLeft:4, transition:"all 0.2s" }}>
-          <div style={{ width:7, height:7, borderRadius:"50%", background:teamView?"#22c55e":"#1e293b", boxShadow:teamView?"0 0 7px #22c55e":"none", transition:"all 0.2s" }} />
-          <span style={{ fontSize:9, color:teamView?"#64748b":"#334155", letterSpacing:1 }}>{teamView?"TEAM VIEW ON":"MY VIEW"}</span>
+        <div onClick={()=>setTeamView(v=>!v)} style={{ display:"flex", alignItems:"center", gap:7, cursor:"pointer", background:teamView?"#e7edf5":"transparent", border:`1px solid ${teamView?"#afbcd1":"#e7edf5"}`, borderRadius:20, padding:"5px 12px", marginLeft:4, transition:"all 0.2s" }}>
+          <div style={{ width:7, height:7, borderRadius:"50%", background:teamView?"#22c55e":"#dce3ec", boxShadow:teamView?"0 0 7px #22c55e":"none", transition:"all 0.2s" }} />
+          <span style={{ fontSize:9, color:teamView?"#5b6b84":"#9facc2", letterSpacing:1 }}>{teamView?"TEAM VIEW ON":"MY VIEW"}</span>
         </div>
 
         <div style={{ flex:1 }} />
 
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <div style={{ width:9, height:9, borderRadius:"50%", background:me.color, boxShadow:`0 0 8px ${me.color}` }} />
-          <span style={{ fontSize:11, color:"#94a3b8" }}>{me.name}</span>
-          <span style={{ fontSize:9, color:me.pos==="toast"?"#ff6c2f":"#94a3b8", background:me.pos==="toast"?"#ff6c2f18":"#1e293b", border:`1px solid ${me.pos==="toast"?"#ff6c2f44":"#334155"}`, borderRadius:4, padding:"1px 6px", letterSpacing:1 }}>{me.pos==="toast"?"TOAST":"SQUARE"}</span>
-          <span style={{ fontSize:10, color:"#1e293b" }}>·</span>
-          <span style={{ fontSize:10, color:"#334155" }}>
+          <span style={{ fontSize:11, color:"#47597a" }}>{me.name}</span>
+          <span style={{ fontSize:9, color:me.pos==="toast"?"#ff6c2f":"#47597a", background:me.pos==="toast"?"#ff6c2f18":"#dce3ec", border:`1px solid ${me.pos==="toast"?"#ff6c2f44":"#9facc2"}`, borderRadius:4, padding:"1px 6px", letterSpacing:1 }}>{me.pos==="toast"?"TOAST":"SQUARE"}</span>
+          <span style={{ fontSize:10, color:"#dce3ec" }}>·</span>
+          <span style={{ fontSize:10, color:"#9facc2" }}>
             {myPins.filter(p=>p.type==="worked").length}▼ {myPins.filter(p=>p.type==="layover").length}● {myPins.filter(p=>p.type==="remote").length}◆
           </span>
           <button onClick={()=>supabase.auth.signOut()}
-            style={{ marginLeft:8, background:"none", border:"1px solid #0f1c2e", color:"#1e3a5f", cursor:"pointer", fontSize:9, fontFamily:"'DM Mono'", letterSpacing:1, borderRadius:4, padding:"3px 8px" }}>
+            style={{ marginLeft:8, background:"none", border:"1px solid #e7edf5", color:"#afbcd1", cursor:"pointer", fontSize:9, fontFamily:"'DM Mono'", letterSpacing:1, borderRadius:4, padding:"3px 8px" }}>
             SIGN OUT
           </button>
         </div>
@@ -526,7 +525,7 @@ export default function App() {
             {filteredPins.map(pin => {
               const { x:px, y:py } = positions[pin.id] || { x:-9999, y:-9999 };
               const owner = users[pin.userId] || me;
-              const color = owner?.color || "#94a3b8";
+              const color = owner?.color || "#47597a";
               const isMe  = pin.userId === me?.id;
               const shape = PIN_TYPES[pin.type]?.shape || "pin";
               const isHov = hovered === pin.id;
@@ -536,11 +535,11 @@ export default function App() {
                   onMouseEnter={()=>setHovered(pin.id)} onMouseLeave={()=>setHovered(null)}>
                   <PinShape shape={shape} color={color} size={isMe?20:16} />
                   {isHov && (
-                    <div style={{ position:"absolute", bottom:"115%", left:"50%", transform:"translateX(-50%)", background:"#09111f", border:`1px solid ${color}`, borderRadius:6, padding:"8px 12px", whiteSpace:"nowrap", fontSize:11, zIndex:50, pointerEvents:"none", boxShadow:`0 4px 20px ${color}44` }}>
+                    <div style={{ position:"absolute", bottom:"115%", left:"50%", transform:"translateX(-50%)", background:"#ffffff", border:`1px solid ${color}`, borderRadius:6, padding:"8px 12px", whiteSpace:"nowrap", fontSize:11, zIndex:50, pointerEvents:"none", boxShadow:`0 4px 20px ${color}44` }}>
                       <div style={{ color, fontWeight:500, marginBottom:3 }}>{pin.city}</div>
-                      <div style={{ color:"#475569", fontSize:9, letterSpacing:1 }}>{PIN_TYPES[pin.type]?.label?.toUpperCase()} · {pin.date}</div>
+                      <div style={{ color:"#7686a0", fontSize:9, letterSpacing:1 }}>{PIN_TYPES[pin.type]?.label?.toUpperCase()} · {pin.date}</div>
                       {teamView && <div style={{ color:color+"aa", fontSize:9, marginTop:2 }}>{owner?.name}</div>}
-                      {pin.note && <div style={{ color:"#64748b", marginTop:4, fontSize:10, maxWidth:180 }}>{pin.note}</div>}
+                      {pin.note && <div style={{ color:"#5b6b84", marginTop:4, fontSize:10, maxWidth:180 }}>{pin.note}</div>}
                     </div>
                   )}
                 </div>
@@ -554,18 +553,18 @@ export default function App() {
           </div>
 
           <div style={{ position:"absolute", left:0, right:0, bottom:8, textAlign:"center", zIndex:15, pointerEvents:"none" }}>
-            <span style={{ color:"#0d1a2b", fontSize:8, fontFamily:"'DM Mono', monospace", letterSpacing:3, background:"#080c16cc", padding:"3px 8px", borderRadius:3 }}>SEARCH A PLACE OR CLICK THE MAP TO DROP A PIN</span>
+            <span style={{ color:"#7686a0", fontSize:8, fontFamily:"'DM Mono', monospace", letterSpacing:3, background:"#ffffffcc", padding:"3px 8px", borderRadius:3 }}>SEARCH A PLACE OR CLICK THE MAP TO DROP A PIN</span>
           </div>
         </div>
 
         {/* ── Sidebar ── */}
-        <div style={{ width:268, background:"#09111f", borderLeft:"1px solid #0f1c2e", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+        <div style={{ width:268, background:"#ffffff", borderLeft:"1px solid #e7edf5", display:"flex", flexDirection:"column", overflow:"hidden" }}>
 
           {/* Tabs */}
-          <div style={{ display:"flex", borderBottom:"1px solid #0f1c2e", flexShrink:0 }}>
+          <div style={{ display:"flex", borderBottom:"1px solid #e7edf5", flexShrink:0 }}>
             {[["list","LOG"],["add","+ PIN"],["board","CREW"]].map(([key,lbl])=>(
               <button key={key} onClick={()=>{ setPanel(key); if(key!=="add") setDropping(null); }}
-                style={{ flex:1, padding:"10px 4px", background:panel===key?"#0f1c2e":"transparent", color:panel===key?"#e2e8f0":"#1e3a5f", border:"none", cursor:"pointer", fontSize:9, letterSpacing:2, fontFamily:"'DM Mono'", borderBottom:panel===key?`2px solid ${me.color}`:"2px solid transparent", transition:"color 0.15s" }}>
+                style={{ flex:1, padding:"10px 4px", background:panel===key?"#e7edf5":"transparent", color:panel===key?"#16233d":"#afbcd1", border:"none", cursor:"pointer", fontSize:9, letterSpacing:2, fontFamily:"'DM Mono'", borderBottom:panel===key?`2px solid ${me.color}`:"2px solid transparent", transition:"color 0.15s" }}>
                 {lbl}
               </button>
             ))}
@@ -577,37 +576,37 @@ export default function App() {
               <div style={{ display:"flex", gap:5, padding:"9px 10px 5px", flexWrap:"wrap" }}>
                 {[["all","ALL"],...Object.entries(PIN_TYPES).map(([k,v])=>[k,v.legend])].map(([key,lbl])=>(
                   <button key={key} className="cat-btn" onClick={()=>setFilterType(key)}
-                    style={{ padding:"3px 9px", borderRadius:10, background:filterType===key?"#0f1c2e":"transparent", border:`1px solid ${filterType===key?"#1e3a5f":"#0f1c2e"}`, color:filterType===key?"#94a3b8":"#1e3a5f", fontSize:10, cursor:"pointer", fontFamily:"'DM Mono'" }}>
+                    style={{ padding:"3px 9px", borderRadius:10, background:filterType===key?"#e7edf5":"transparent", border:`1px solid ${filterType===key?"#afbcd1":"#e7edf5"}`, color:filterType===key?"#47597a":"#afbcd1", fontSize:10, cursor:"pointer", fontFamily:"'DM Mono'" }}>
                     {lbl}
                   </button>
                 ))}
               </div>
               {filteredPins.length===0 ? (
-                <div style={{ padding:"30px 20px", textAlign:"center", color:"#0f1c2e", fontSize:11 }}>
+                <div style={{ padding:"30px 20px", textAlign:"center", color:"#7686a0", fontSize:11 }}>
                   {teamView?"No team pins yet.":"No pins yet."}<br/><span style={{ fontSize:10 }}>Click the map to start.</span>
                 </div>
               ) : filteredPins.slice().reverse().map(pin => {
                 const owner = users[pin.userId] || me;
-                const color = owner?.color || "#94a3b8";
+                const color = owner?.color || "#47597a";
                 const t     = PIN_TYPES[pin.type];
                 const isMe  = pin.userId === me?.id;
                 return (
-                  <div key={pin.id} className="pin-row" style={{ padding:"9px 10px", borderBottom:"1px solid #0b1220", display:"flex", gap:8, alignItems:"flex-start" }}
+                  <div key={pin.id} className="pin-row" style={{ padding:"9px 10px", borderBottom:"1px solid #e3e8ef", display:"flex", gap:8, alignItems:"flex-start" }}
                     onMouseEnter={()=>setHovered(pin.id)} onMouseLeave={()=>setHovered(null)}>
                     <div style={{ marginTop:2, flexShrink:0 }}>
                       <PinShape shape={t.shape} color={color} size={12} />
                     </div>
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ fontSize:12, color:"#cbd5e1", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.city}</div>
-                      <div style={{ fontSize:9, color:"#1e3a5f", letterSpacing:1 }}>
+                      <div style={{ fontSize:12, color:"#7e8fa8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.city}</div>
+                      <div style={{ fontSize:9, color:"#afbcd1", letterSpacing:1 }}>
                         {t.label.toUpperCase()} · {pin.date}
                         {teamView&&!isMe&&<span style={{ color:color+"cc", marginLeft:4 }}>· {owner.name}</span>}
                       </div>
-                      {pin.note&&<div style={{ fontSize:10, color:"#334155", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.note}</div>}
+                      {pin.note&&<div style={{ fontSize:10, color:"#9facc2", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pin.note}</div>}
                     </div>
                     {isMe && (
                       <button className="del-btn" onClick={()=>handleDelete(pin.id)}
-                        style={{ background:"none", border:"none", color:"#1e3a5f", cursor:"pointer", fontSize:14, padding:"0 2px", lineHeight:1 }}>×</button>
+                        style={{ background:"none", border:"none", color:"#afbcd1", cursor:"pointer", fontSize:14, padding:"0 2px", lineHeight:1 }}>×</button>
                     )}
                   </div>
                 );
@@ -618,89 +617,89 @@ export default function App() {
           {/* ADD PIN */}
           {panel==="add" && (
             <div style={{ padding:14, display:"flex", flexDirection:"column", gap:13, overflowY:"auto" }}>
-              <div style={{ fontSize:9, color:dropping?"#475569":"#1e293b", letterSpacing:1 }}>
+              <div style={{ fontSize:9, color:dropping?"#7686a0":"#dce3ec", letterSpacing:1 }}>
                 {dropping?`📍 ${dropping.lat.toFixed(3)}°, ${dropping.lng.toFixed(3)}°`:"search a place or click the map"}
               </div>
               <div style={{ position:"relative" }}>
-                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:6 }}>SEARCH LOCATION</div>
+                <div style={{ fontSize:9, color:"#9facc2", letterSpacing:2, marginBottom:6 }}>SEARCH LOCATION</div>
                 <input placeholder="Any city, town, or address..." value={search} onChange={e=>handleSearchChange(e.target.value)} />
                 {(searching || searchResults.length > 0) && (
-                  <div style={{ position:"absolute", top:"100%", left:0, right:0, marginTop:4, background:"#0f172a", border:"1px solid #1e293b", borderRadius:6, zIndex:60, maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}>
-                    {searching && <div style={{ padding:"8px 10px", fontSize:10, color:"#334155" }}>searching...</div>}
+                  <div style={{ position:"absolute", top:"100%", left:0, right:0, marginTop:4, background:"#f5f7fa", border:"1px solid #dce3ec", borderRadius:6, zIndex:60, maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}>
+                    {searching && <div style={{ padding:"8px 10px", fontSize:10, color:"#9facc2" }}>searching...</div>}
                     {!searching && searchResults.length === 0 && search.trim().length >= 3 && (
-                      <div style={{ padding:"8px 10px", fontSize:10, color:"#334155" }}>no matches</div>
+                      <div style={{ padding:"8px 10px", fontSize:10, color:"#9facc2" }}>no matches</div>
                     )}
                     {!searching && searchResults.map((r, i) => (
                       <button key={i} onClick={()=>pickSearchResult(r)}
-                        style={{ display:"block", width:"100%", textAlign:"left", padding:"8px 10px", background:"transparent", border:"none", borderBottom:i<searchResults.length-1?"1px solid #0f1c2e":"none", cursor:"pointer" }}
-                        onMouseEnter={e=>e.currentTarget.style.background="#0f1c2e"}
+                        style={{ display:"block", width:"100%", textAlign:"left", padding:"8px 10px", background:"transparent", border:"none", borderBottom:i<searchResults.length-1?"1px solid #e7edf5":"none", cursor:"pointer" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#e7edf5"}
                         onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-                        <div style={{ fontSize:11, color:"#e2e8f0" }}>{shortLabel(r)}</div>
-                        <div style={{ fontSize:9, color:"#334155", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.display_name}</div>
+                        <div style={{ fontSize:11, color:"#16233d" }}>{shortLabel(r)}</div>
+                        <div style={{ fontSize:9, color:"#9facc2", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.display_name}</div>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
               <div>
-                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:7 }}>CATEGORY</div>
+                <div style={{ fontSize:9, color:"#9facc2", letterSpacing:2, marginBottom:7 }}>CATEGORY</div>
                 <div style={{ display:"flex", flexDirection:"column", gap:5 }}>
                   {Object.entries(PIN_TYPES).map(([key,val])=>(
                     <button key={key} className="cat-btn" onClick={()=>setForm(f=>({...f,type:key}))}
-                      style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", background:form.type===key?"#0f1c2e":"transparent", border:`1px solid ${form.type===key?"#1e3a5f":"#0d1a2b"}`, borderRadius:5, cursor:"pointer", textAlign:"left", fontFamily:"'DM Mono'" }}>
-                      <PinShape shape={val.shape} color={form.type===key?me.color:"#1e3a5f"} size={13} />
-                      <span style={{ fontSize:11, color:form.type===key?"#e2e8f0":"#334155" }}>{val.label}</span>
+                      style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 10px", background:form.type===key?"#e7edf5":"transparent", border:`1px solid ${form.type===key?"#afbcd1":"#c2cbda"}`, borderRadius:5, cursor:"pointer", textAlign:"left", fontFamily:"'DM Mono'" }}>
+                      <PinShape shape={val.shape} color={form.type===key?me.color:"#afbcd1"} size={13} />
+                      <span style={{ fontSize:11, color:form.type===key?"#16233d":"#9facc2" }}>{val.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:6 }}>CITY / LOCATION LABEL</div>
+                <div style={{ fontSize:9, color:"#9facc2", letterSpacing:2, marginBottom:6 }}>CITY / LOCATION LABEL</div>
                 <input placeholder="Austin, TX" value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&handleAddPin()} />
               </div>
               <div>
-                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:6 }}>NOTE (OPTIONAL)</div>
+                <div style={{ fontSize:9, color:"#9facc2", letterSpacing:2, marginBottom:6 }}>NOTE (OPTIONAL)</div>
                 <textarea placeholder="Brewery install, day 2..." value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} />
               </div>
               <button onClick={handleAddPin} disabled={!dropping||!form.city.trim()}
-                style={{ padding:"11px", background:dropping&&form.city.trim()?me.color:"#0a1120", color:dropping&&form.city.trim()?"#fff":"#1e293b", border:"none", borderRadius:5, fontFamily:"'Bebas Neue'", fontSize:15, letterSpacing:3, cursor:dropping&&form.city.trim()?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:dropping&&form.city.trim()?`0 0 18px ${me.color}55`:"none" }}>
+                style={{ padding:"11px", background:dropping&&form.city.trim()?me.color:"#e7eaf0", color:dropping&&form.city.trim()?"#fff":"#dce3ec", border:"none", borderRadius:5, fontFamily:"'Bebas Neue'", fontSize:15, letterSpacing:3, cursor:dropping&&form.city.trim()?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:dropping&&form.city.trim()?`0 0 18px ${me.color}55`:"none" }}>
                 DROP PIN
               </button>
-              {!dropping&&<div style={{ fontSize:9, color:"#1e293b", textAlign:"center" }}>search a place or click the map first</div>}
+              {!dropping&&<div style={{ fontSize:9, color:"#9facc2", textAlign:"center" }}>search a place or click the map first</div>}
             </div>
           )}
 
           {/* CREW BOARD */}
           {panel==="board" && (
             <div style={{ flex:1, overflowY:"auto", padding:"10px 0" }}>
-              <div style={{ padding:"0 12px 8px", fontSize:9, color:"#1e3a5f", letterSpacing:2 }}>LEADERBOARD</div>
+              <div style={{ padding:"0 12px 8px", fontSize:9, color:"#afbcd1", letterSpacing:2 }}>LEADERBOARD</div>
               {leaderboard.length===0 ? (
-                <div style={{ padding:20, textAlign:"center", color:"#0f1c2e", fontSize:11 }}>No crew data yet.</div>
+                <div style={{ padding:20, textAlign:"center", color:"#7686a0", fontSize:11 }}>No crew data yet.</div>
               ) : leaderboard.map((u,i) => (
-                <div key={u.uid} style={{ padding:"10px 12px", borderBottom:"1px solid #0b1220" }}>
+                <div key={u.uid} style={{ padding:"10px 12px", borderBottom:"1px solid #e3e8ef" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:7, marginBottom:5 }}>
-                    <div style={{ fontFamily:"'Bebas Neue'", fontSize:15, color:i===0?"#f59e0b":"#1e3a5f", width:16, flexShrink:0 }}>{i+1}</div>
+                    <div style={{ fontFamily:"'Bebas Neue'", fontSize:15, color:i===0?"#f59e0b":"#afbcd1", width:16, flexShrink:0 }}>{i+1}</div>
                     <div style={{ width:8, height:8, borderRadius:"50%", background:u.color, boxShadow:`0 0 7px ${u.color}`, flexShrink:0 }} />
-                    <div style={{ fontSize:12, color:u.uid===me.id?u.color:"#94a3b8" }}>{u.name}{u.uid===me.id&&" (you)"}</div>
-                    <span style={{ fontSize:8, color:u.pos==="toast"?"#ff6c2f":"#94a3b8", background:u.pos==="toast"?"#ff6c2f18":"#1e293b22", border:`1px solid ${u.pos==="toast"?"#ff6c2f33":"#33415533"}`, borderRadius:3, padding:"1px 5px", letterSpacing:1 }}>{u.pos==="square"?"SQ":"🍞"}</span>
+                    <div style={{ fontSize:12, color:u.uid===me.id?u.color:"#47597a" }}>{u.name}{u.uid===me.id&&" (you)"}</div>
+                    <span style={{ fontSize:8, color:u.pos==="toast"?"#ff6c2f":"#47597a", background:u.pos==="toast"?"#ff6c2f18":"#dce3ec22", border:`1px solid ${u.pos==="toast"?"#ff6c2f33":"#9facc233"}`, borderRadius:3, padding:"1px 5px", letterSpacing:1 }}>{u.pos==="square"?"SQ":"🍞"}</span>
                     <div style={{ flex:1 }} />
-                    <div style={{ fontSize:10, color:"#334155" }}>{u.total} pins</div>
+                    <div style={{ fontSize:10, color:"#9facc2" }}>{u.total} pins</div>
                   </div>
                   <div style={{ display:"flex", gap:12, paddingLeft:23 }}>
                     {[["worked","▼"],["layover","●"],["remote","◆"]].map(([k,sym])=>(
-                      <div key={k} style={{ fontSize:10, color:"#334155" }}>
+                      <div key={k} style={{ fontSize:10, color:"#9facc2" }}>
                         <span style={{ color:u.color, marginRight:3 }}>{sym}</span>{u[k]}
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
-              <div style={{ padding:"14px 12px 0", borderTop:"1px solid #0b1220", marginTop:6 }}>
-                <div style={{ fontSize:9, color:"#1e3a5f", letterSpacing:2, marginBottom:10 }}>SHAPE KEY</div>
+              <div style={{ padding:"14px 12px 0", borderTop:"1px solid #e3e8ef", marginTop:6 }}>
+                <div style={{ fontSize:9, color:"#afbcd1", letterSpacing:2, marginBottom:10 }}>SHAPE KEY</div>
                 {Object.entries(PIN_TYPES).map(([key,val])=>(
                   <div key={key} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                    <PinShape shape={val.shape} color="#334155" size={12} />
-                    <span style={{ fontSize:10, color:"#334155" }}>{val.label}</span>
+                    <PinShape shape={val.shape} color="#9facc2" size={12} />
+                    <span style={{ fontSize:10, color:"#9facc2" }}>{val.label}</span>
                   </div>
                 ))}
               </div>
