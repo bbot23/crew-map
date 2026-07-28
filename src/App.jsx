@@ -328,7 +328,23 @@ export default function App() {
     leafletRef.current = map;
     bump();
 
-    return () => { map.remove(); leafletRef.current = null; };
+    // Leaflet sometimes measures its container as 0×0 the instant it's
+    // created inside a flex layout, which bakes in a broken tile grid
+    // until something tells it to re-measure. Force that re-measure now,
+    // shortly after (once layout has definitely settled), and any time
+    // the container's actual size changes (e.g. window resize).
+    map.invalidateSize();
+    const settleTimer = setTimeout(() => map.invalidateSize(), 150);
+
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    resizeObserver.observe(mapRef.current);
+
+    return () => {
+      clearTimeout(settleTimer);
+      resizeObserver.disconnect();
+      map.remove();
+      leafletRef.current = null;
+    };
   }, []);
 
   // ── Location search (OpenStreetMap Nominatim — free, no API key, and it
