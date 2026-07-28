@@ -401,11 +401,23 @@ export default function App() {
     setDropping(null);
     setForm({ type:"worked", city:"", note:"" });
     setPanel("list");
-    await supabase.from("pins").insert(pin);
+    const { data, error } = await supabase.from("pins").insert(pin).select().single();
+    if (error) {
+      console.error("Failed to save pin:", error.message);
+      return;
+    }
+    // Draw it immediately from this response — don't wait on the realtime
+    // subscription to echo it back, since that channel can silently miss
+    // events (e.g. right after the database wakes from being paused).
+    // The realtime handler below already dedupes by id, so if the
+    // broadcast does arrive too, nothing is added twice.
+    setPins(prev => prev.some(p => p.id === data.id) ? prev : [...prev, normPin(data)]);
   };
 
   const handleDelete = async (id) => {
-    await supabase.from("pins").delete().eq("id", id);
+    const { error } = await supabase.from("pins").delete().eq("id", id);
+    if (error) { console.error("Failed to delete pin:", error.message); return; }
+    setPins(prev => prev.filter(p => p.id !== id));
   };
 
   // ── Derived state ─────────────────────────────────────────────────────────
