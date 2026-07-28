@@ -584,20 +584,20 @@ export default function App() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
         :root {
-          --bg:#eef1f6; --panel:#ffffff; --hover:#e7edf5; --input:#f5f7fa;
-          --border:#dce3ec; --border-muted:#afbcd1; --label-dim:#9facc2;
-          --text-muted:#7686a0; --text-body:#5b6b84; --text-prominent:#47597a;
-          --text-primary:#16233d; --text-bright:#0a1424; --text-subtitle:#7e8fa8;
-          --ghost-border:#c2cbda; --bg-very-dim:#f0f2f6; --bg-disabled:#e7eaf0;
-          --divider:#e3e8ef; --chip-bg:#ffffffcc; --badge-bg:#dce3ec22; --badge-border:#9facc233;
+          --bg:#dde2e9; --panel:#ebedf1; --hover:#d7dee8; --input:#e3e7ec;
+          --border:#ced6e1; --border-muted:#a7b4ca; --label-dim:#9daac0;
+          --text-muted:#7686a0; --text-body:#5d6d86; --text-prominent:#4b5c7d;
+          --text-primary:#1d2a44; --text-bright:#121c2d; --text-subtitle:#7e8fa7;
+          --ghost-border:#b8c1d1; --bg-very-dim:#dfe2e9; --bg-disabled:#d7dce4;
+          --divider:#d4dae3; --chip-bg:#ebedf1cc; --badge-bg:#ced6e122; --badge-border:#9daac033;
         }
         [data-theme="dark"] {
-          --bg:#080c16; --panel:#09111f; --hover:#0f1c2e; --input:#0f172a;
-          --border:#1e293b; --border-muted:#1e3a5f; --label-dim:#334155;
-          --text-muted:#475569; --text-body:#64748b; --text-prominent:#94a3b8;
-          --text-primary:#e2e8f0; --text-bright:#f1f5f9; --text-subtitle:#cbd5e1;
-          --ghost-border:#0d1a2b; --bg-very-dim:#0a0e1b; --bg-disabled:#0a1120;
-          --divider:#0b1220; --chip-bg:#080c16cc; --badge-bg:#1e293b22; --badge-border:#33415533;
+          --bg:#191f2b; --panel:#1a2332; --hover:#1f2c3f; --input:#1f283c;
+          --border:#2c384a; --border-muted:#2c4669; --label-dim:#38465a;
+          --text-muted:#4b596d; --text-body:#66768c; --text-prominent:#92a1b6;
+          --text-primary:#dbe1ea; --text-bright:#e9eef3; --text-subtitle:#c5d0dc;
+          --ghost-border:#1e2b3d; --bg-very-dim:#1b212f; --bg-disabled:#1b2333;
+          --divider:#1c2433; --chip-bg:#1a2332cc; --badge-bg:#2c384a22; --badge-border:#38465a33;
         }
         * { box-sizing:border-box; margin:0; padding:0; }
         ::-webkit-scrollbar { width:3px; }
@@ -619,6 +619,8 @@ export default function App() {
         .leaflet-control-zoom a:hover { background:var(--hover) !important; color:var(--text-prominent) !important; }
         .leaflet-control-attribution { background:var(--chip-bg) !important; color:var(--label-dim) !important; font-size:9px !important; }
         .leaflet-control-attribution a { color:var(--text-muted) !important; }
+        .leaflet-tile-pane { filter:brightness(0.97) saturate(0.92); }
+        [data-theme="dark"] .leaflet-tile-pane { filter:brightness(1.35) contrast(0.85) saturate(0.85); }
 
         /* Native pin markers — hover/pop effects go on the inner SVG, not the
            marker div itself, since leaflet uses that div's own transform for
