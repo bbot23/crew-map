@@ -1,32 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
-import { geoConicConformal, geoPath } from "d3-geo";
-import { feature } from "topojson-client";
-import worldData from "world-atlas/countries-50m.json";
-import usData from "us-atlas/states-10m.json";
-
-const W = 960, H = 700;
-
-const _NA_BOUNDS = {
-  type: "Feature",
-  geometry: {
-    type: "Polygon",
-    coordinates: [[[-168, 7], [-50, 7], [-50, 84], [-168, 84], [-168, 7]]]
-  }
-};
-
-const _proj = geoConicConformal()
-  .parallels([29.5, 45.5])
-  .rotate([96, 0])
-  .fitExtent([[10, 10], [W - 10, H - 10]], _NA_BOUNDS);
-
-const _path       = geoPath(_proj);
-const _usStates   = feature(usData, usData.objects.states).features;
-const _usNation   = feature(usData, usData.objects.nation).features;
-const _wCountries = feature(worldData, worldData.objects.countries).features;
-const _canada     = _wCountries.filter(f => f.id === 124);
-const _mexico     = _wCountries.filter(f => f.id === 484);
-const _naContext  = _wCountries.filter(f => f.id !== 840 && f.id !== 124 && f.id !== 484);
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -41,56 +16,22 @@ const TEAM_COLORS = [
 ];
 const COLOR_NAMES = ["Orange","Green","Purple","Pink","Cyan","Yellow","Red","Teal"];
 
-const CITIES = [
-  { name:"New York",      lat: 40.71, lng: -74.01 },
-  { name:"Los Angeles",   lat: 34.05, lng:-118.24 },
-  { name:"Chicago",       lat: 41.88, lng: -87.63 },
-  { name:"Houston",       lat: 29.76, lng: -95.37 },
-  { name:"Phoenix",       lat: 33.45, lng:-112.07 },
-  { name:"Philadelphia",  lat: 39.95, lng: -75.17 },
-  { name:"San Antonio",   lat: 29.42, lng: -98.49 },
-  { name:"Dallas",        lat: 32.78, lng: -96.80 },
-  { name:"San Francisco", lat: 37.77, lng:-122.42 },
-  { name:"Seattle",       lat: 47.61, lng:-122.33 },
-  { name:"Denver",        lat: 39.74, lng:-104.98 },
-  { name:"Nashville",     lat: 36.17, lng: -86.78 },
-  { name:"Las Vegas",     lat: 36.17, lng:-115.14 },
-  { name:"Miami",         lat: 25.77, lng: -80.19 },
-  { name:"Atlanta",       lat: 33.75, lng: -84.39 },
-  { name:"Minneapolis",   lat: 44.98, lng: -93.27 },
-  { name:"Boston",        lat: 42.36, lng: -71.06 },
-  { name:"Portland",      lat: 45.52, lng:-122.68 },
-  { name:"St. Louis",     lat: 38.63, lng: -90.20 },
-  { name:"New Orleans",   lat: 29.95, lng: -90.07 },
-  { name:"Austin",        lat: 30.27, lng: -97.74 },
-  { name:"Charlotte",     lat: 35.23, lng: -80.84 },
-  { name:"Toronto",       lat: 43.65, lng: -79.38 },
-  { name:"Vancouver",     lat: 49.25, lng:-123.12 },
-  { name:"Montreal",      lat: 45.50, lng: -73.57 },
-  { name:"Calgary",       lat: 51.05, lng:-114.07 },
-  { name:"Edmonton",      lat: 53.55, lng:-113.49 },
-  { name:"Ottawa",        lat: 45.42, lng: -75.69 },
-  { name:"Winnipeg",      lat: 49.90, lng: -97.14 },
-  { name:"Mexico City",   lat: 19.43, lng: -99.13 },
-  { name:"Guadalajara",   lat: 20.67, lng:-103.35 },
-  { name:"Monterrey",     lat: 25.67, lng:-100.31 },
-];
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function latLngToXY(lat, lng) {
-  const pt = _proj([lng, lat]);
-  if (!pt) return { x: -9999, y: -9999 };
-  return { x: pt[0], y: pt[1] };
-}
-
-function xyToLatLng(x, y) {
-  const pt = _proj.invert([x, y]);
-  if (!pt) return { lat: 39, lng: -98 };
-  return { lat: pt[1], lng: pt[0] };
-}
-
 const normPin = (row) => ({ ...row, userId: row.user_id });
+
+// Turns a Nominatim search result into a short, readable label like
+// "Elkins, WV" or "Banff, Canada" for prefilling the city field.
+function shortLabel(r) {
+  const a = r.address || {};
+  const place = a.city || a.town || a.village || a.hamlet || a.municipality || a.county
+    || (r.display_name ? r.display_name.split(",")[0] : "Unnamed spot");
+  const region = a.state || a.province || "";
+  const cc = a.country_code ? a.country_code.toUpperCase() : "";
+  if (region && (cc === "US" || cc === "CA")) return `${place}, ${region}`;
+  if (a.country) return `${place}, ${a.country}`;
+  return place;
+}
 
 // ─── Pin Shapes ───────────────────────────────────────────────────────────────
 
@@ -279,9 +220,14 @@ export default function App() {
   const [hovered, setHovered]       = useState(null);
   const [panel, setPanel]           = useState("list");
   const [filterType, setFilterType] = useState("all");
-  const [zoom, setZoom]             = useState({ x:0, y:0, k:1 });
-  const mapRef  = useRef(null);
-  const dragRef = useRef(null);
+  const [search, setSearch]         = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching]   = useState(false);
+  const [renderTick, setRenderTick] = useState(0); // bumped on leaflet pan/zoom to reposition pin overlay
+  const [positions, setPositions]   = useState({}); // pin id -> {x,y} in container pixels, plus __dropping
+  const mapRef       = useRef(null); // DOM node leaflet mounts into
+  const leafletRef   = useRef(null); // leaflet Map instance
+  const searchTimer  = useRef(null);
 
   // ── Auth listener ─────────────────────────────────────────────────────────
 
@@ -348,80 +294,74 @@ export default function App() {
     setUsers(prev => ({ ...prev, [uid]: { name, color, pos } }));
   };
 
-  // ── Wheel zoom (non-passive so we can preventDefault) ─────────────────────
+  // ── Leaflet map init (real tiles: every city, town, and back road, all the
+  //    way down to street level — no more blank vector states) ──────────────
   useEffect(() => {
-    const el = mapRef.current;
-    if (!el) return;
-    const onWheel = (e) => {
-      e.preventDefault();
-      setZoom(prev => {
-        const rect = el.getBoundingClientRect();
-        const svgX = (e.clientX - rect.left) * (W / rect.width);
-        const svgY = (e.clientY - rect.top)  * (H / rect.height);
-        const factor = e.deltaY < 0 ? 1.25 : 0.8;
-        const newK = Math.min(8, Math.max(1, prev.k * factor));
-        const ratio = newK / prev.k;
-        const nx = svgX - (svgX - prev.x) * ratio;
-        const ny = svgY - (svgY - prev.y) * ratio;
-        return {
-          k: newK,
-          x: Math.min(0, Math.max(-(newK - 1) * W, nx)),
-          y: Math.min(0, Math.max(-(newK - 1) * H, ny)),
-        };
-      });
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
+    if (!mapRef.current || leafletRef.current) return;
+
+    const map = L.map(mapRef.current, {
+      center: [39, -98],
+      zoom: 4,
+      minZoom: 3,
+      maxZoom: 18,
+      zoomControl: false,
+      worldCopyJump: true,
+    });
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: "abcd",
+      maxZoom: 20,
+    }).addTo(map);
+
+    L.control.zoom({ position: "bottomright" }).addTo(map);
+
+    const bump = () => setRenderTick(t => t + 1);
+    map.on("move zoom", bump);
+    map.on("click", (e) => {
+      setDropping({ lat: e.latlng.lat, lng: e.latlng.lng });
+      setPanel("add");
+      setForm({ type: "worked", city: "", note: "" });
+      setSearch(""); setSearchResults([]);
+    });
+
+    leafletRef.current = map;
+    bump();
+
+    return () => { map.remove(); leafletRef.current = null; };
   }, []);
 
-  const handlePointerDown = (e) => {
-    if (e.button !== 0) return;
-    e.currentTarget.setPointerCapture(e.pointerId);
-    e.currentTarget.style.cursor = "grabbing";
-    dragRef.current = {
-      startX: e.clientX, startY: e.clientY,
-      startZX: zoom.x,   startZY: zoom.y,   startZK: zoom.k,
-      moved: false,
-    };
+  // ── Location search (OpenStreetMap Nominatim — free, no API key, and it
+  //    knows small towns, not just the ~30 major metros the old map showed) ─
+  const runSearch = async (q) => {
+    if (!q || q.trim().length < 3) { setSearchResults([]); return; }
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&q=${encodeURIComponent(q)}`
+      );
+      const data = await res.json();
+      setSearchResults(Array.isArray(data) ? data : []);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
   };
 
-  const handlePointerMove = (e) => {
-    const d = dragRef.current;
-    if (!d) return;
-    const dx = e.clientX - d.startX;
-    const dy = e.clientY - d.startY;
-    if (Math.hypot(dx, dy) > 3) d.moved = true;
-    const rect = mapRef.current.getBoundingClientRect();
-    const k  = d.startZK;
-    const nx = d.startZX + dx * (W / rect.width);
-    const ny = d.startZY + dy * (H / rect.height);
-    setZoom({
-      k,
-      x: Math.min(0, Math.max(-(k - 1) * W, nx)),
-      y: Math.min(0, Math.max(-(k - 1) * H, ny)),
-    });
+  const handleSearchChange = (v) => {
+    setSearch(v);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => runSearch(v), 450);
   };
 
-  const handlePointerUp = (e) => {
-    const d = dragRef.current;
-    if (!d) return;
-    dragRef.current = null;
-    e.currentTarget.releasePointerCapture(e.pointerId);
-    e.currentTarget.style.cursor = "crosshair";
-    if (!d.moved) handleMapClick(e);
-  };
-
-  const handleMapClick = (e) => {
-    if (!me || !mapRef.current) return;
-    const rect = mapRef.current.getBoundingClientRect();
-    const svgX = (e.clientX - rect.left) * (W / rect.width);
-    const svgY = (e.clientY - rect.top)  * (H / rect.height);
-    const lx = (svgX - zoom.x) / zoom.k;
-    const ly = (svgY - zoom.y) / zoom.k;
-    const { lat, lng } = xyToLatLng(lx, ly);
-    setDropping({ x:e.clientX - rect.left, y:e.clientY - rect.top, lat, lng });
-    setPanel("add");
-    setForm({ type:"worked", city:"", note:"" });
+  const pickSearchResult = (r) => {
+    const lat = parseFloat(r.lat), lng = parseFloat(r.lon);
+    if (Number.isNaN(lat) || Number.isNaN(lng)) return;
+    setDropping({ lat, lng });
+    setForm(f => ({ ...f, city: shortLabel(r) }));
+    setSearch(""); setSearchResults([]);
+    leafletRef.current?.flyTo([lat, lng], 12, { duration: 0.8 });
   };
 
   const handleAddPin = async () => {
@@ -453,6 +393,24 @@ export default function App() {
     const u = users[uid] || { name:uid, color:"#94a3b8" };
     return { ...u, uid, total:uPins.length, worked:uPins.filter(p=>p.type==="worked").length, layover:uPins.filter(p=>p.type==="layover").length, remote:uPins.filter(p=>p.type==="remote").length };
   }).sort((a,b) => b.worked - a.worked);
+
+  // Recompute on-screen pixel positions whenever the map pans/zooms
+  // (renderTick) or the visible pin set changes. Reading the leaflet ref
+  // here, inside an effect, keeps ref access out of the render path.
+  useEffect(() => {
+    const map = leafletRef.current;
+    if (!map) return;
+    const next = {};
+    filteredPins.forEach(p => {
+      const pt = map.latLngToContainerPoint([p.lat, p.lng]);
+      next[p.id] = { x: pt.x, y: pt.y };
+    });
+    if (dropping) {
+      const pt = map.latLngToContainerPoint([dropping.lat, dropping.lng]);
+      next.__dropping = { x: pt.x, y: pt.y };
+    }
+    setPositions(next);
+  }, [renderTick, dropping, filteredPins]);
 
   // ── Render gates ──────────────────────────────────────────────────────────
 
@@ -488,6 +446,14 @@ export default function App() {
         .pin-row:hover .del-btn { opacity:1; }
         .cat-btn { transition:all 0.15s; }
         .cat-btn:hover { opacity:0.85; }
+
+        /* Leaflet chrome, restyled to match the dark crew-map theme */
+        .leaflet-container { background:#09111f; font-family:'DM Mono', monospace; cursor:crosshair; }
+        .leaflet-control-zoom { border:1px solid #1e293b !important; box-shadow:none !important; }
+        .leaflet-control-zoom a { background:#09111f !important; color:#475569 !important; border-color:#1e293b !important; }
+        .leaflet-control-zoom a:hover { background:#0f1c2e !important; color:#94a3b8 !important; }
+        .leaflet-control-attribution { background:#080c16cc !important; color:#334155 !important; font-size:9px !important; }
+        .leaflet-control-attribution a { color:#475569 !important; }
       `}</style>
 
       {/* ── Header ── */}
@@ -523,91 +489,46 @@ export default function App() {
       <div style={{ flex:1, display:"flex", overflow:"hidden" }}>
 
         {/* ── Map ── */}
-        <div ref={mapRef}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          style={{ flex:1, position:"relative", overflow:"hidden", cursor:"crosshair" }}>
+        <div style={{ flex:1, position:"relative", overflow:"hidden" }}>
 
-          <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", height:"100%", display:"block" }} preserveAspectRatio="none">
-            <rect width={W} height={H} fill="#09111f" />
-            <g transform={`translate(${zoom.x},${zoom.y}) scale(${zoom.k})`}>
-              {/* Surrounding countries — faint background context */}
-              {_naContext.map((feat, i) => (
-                <path key={`ctx${i}`} d={_path(feat)} fill="#0a1525" stroke="#0e1c2e" strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
-              ))}
-              {/* Canada */}
-              {_canada.map((feat, i) => (
-                <path key={`ca${i}`} d={_path(feat)} fill="#0d1d33" stroke="#1a3a5c" strokeWidth={0.5} vectorEffect="non-scaling-stroke" />
-              ))}
-              {/* Mexico */}
-              {_mexico.map((feat, i) => (
-                <path key={`mx${i}`} d={_path(feat)} fill="#0d1d33" stroke="#1a3a5c" strokeWidth={0.5} vectorEffect="non-scaling-stroke" />
-              ))}
-              {/* US states */}
-              {_usStates.map((feat, i) => (
-                <path key={`us${i}`} d={_path(feat)} fill="#0f1e33" stroke="#1a3a5c" strokeWidth={0.4} vectorEffect="non-scaling-stroke" />
-              ))}
-              {/* US nation outline */}
-              {_usNation.map((feat, i) => (
-                <path key={`usn${i}`} d={_path(feat)} fill="none" stroke="#1e4a6b" strokeWidth={1.2} vectorEffect="non-scaling-stroke" />
-              ))}
-              {/* City reference markers */}
-              {CITIES.map(city => {
-                const { x, y } = latLngToXY(city.lat, city.lng);
-                return (
-                  <g key={city.name}>
-                    <circle cx={x} cy={y} r={1.8} fill="#1e3a5f" />
-                    <text x={x + 4} y={y + 3.5} fontSize={5} fill="#1e3a5f" fontFamily="'DM Mono', monospace" letterSpacing={0.3}>{city.name}</text>
-                  </g>
-                );
-              })}
-            </g>
-            <text x={W / 2} y={H - 7} textAnchor="middle" fill="#0d1a2b" fontSize="8" fontFamily="'DM Mono', monospace" letterSpacing="4">CLICK TO DROP A PIN</text>
-          </svg>
+          {/* Leaflet mounts here — real tiles, every town and back road, native pan/zoom */}
+          <div ref={mapRef} style={{ position:"absolute", inset:0 }} />
 
-          {zoom.k > 1 && (
-            <button onClick={() => setZoom({ x:0, y:0, k:1 })}
-              style={{ position:"absolute", top:10, right:10, zIndex:20, background:"#09111f", border:"1px solid #1e293b", color:"#475569", padding:"5px 11px", fontFamily:"'DM Mono'", fontSize:9, cursor:"pointer", borderRadius:4, letterSpacing:2, transition:"color 0.15s" }}
-              onMouseEnter={e=>e.currentTarget.style.color="#94a3b8"}
-              onMouseLeave={e=>e.currentTarget.style.color="#475569"}>
-              ⊙ RESET VIEW
-            </button>
-          )}
+          {/* Overlay layer: our own pins, hover cards, drop cursor — positioned via leaflet's projection */}
+          <div style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:15 }}>
+            {filteredPins.map(pin => {
+              const { x:px, y:py } = positions[pin.id] || { x:-9999, y:-9999 };
+              const owner = users[pin.userId] || me;
+              const color = owner?.color || "#94a3b8";
+              const isMe  = pin.userId === me?.id;
+              const shape = PIN_TYPES[pin.type]?.shape || "pin";
+              const isHov = hovered === pin.id;
+              return (
+                <div key={pin.id} className="map-pin pin-pop"
+                  style={{ position:"absolute", left:px, top:py, transform:"translate(-50%,-100%)", zIndex:isHov?30:isMe?15:10, opacity:teamView&&!isMe?0.7:1, pointerEvents:"auto" }}
+                  onMouseEnter={()=>setHovered(pin.id)} onMouseLeave={()=>setHovered(null)}>
+                  <PinShape shape={shape} color={color} size={isMe?20:16} />
+                  {isHov && (
+                    <div style={{ position:"absolute", bottom:"115%", left:"50%", transform:"translateX(-50%)", background:"#09111f", border:`1px solid ${color}`, borderRadius:6, padding:"8px 12px", whiteSpace:"nowrap", fontSize:11, zIndex:50, pointerEvents:"none", boxShadow:`0 4px 20px ${color}44` }}>
+                      <div style={{ color, fontWeight:500, marginBottom:3 }}>{pin.city}</div>
+                      <div style={{ color:"#475569", fontSize:9, letterSpacing:1 }}>{PIN_TYPES[pin.type]?.label?.toUpperCase()} · {pin.date}</div>
+                      {teamView && <div style={{ color:color+"aa", fontSize:9, marginTop:2 }}>{owner?.name}</div>}
+                      {pin.note && <div style={{ color:"#64748b", marginTop:4, fontSize:10, maxWidth:180 }}>{pin.note}</div>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
 
-          {/* Pins */}
-          {filteredPins.map(pin => {
-            const rect = mapRef.current?.getBoundingClientRect();
-            if (!rect) return null;
-            const pos   = latLngToXY(pin.lat, pin.lng);
-            const px    = ((pos.x * zoom.k + zoom.x) / W) * rect.width;
-            const py    = ((pos.y * zoom.k + zoom.y) / H) * rect.height;
-            const owner = users[pin.userId] || me;
-            const color = owner?.color || "#94a3b8";
-            const isMe  = pin.userId === me?.id;
-            const shape = PIN_TYPES[pin.type]?.shape || "pin";
-            const isHov = hovered === pin.id;
-            return (
-              <div key={pin.id} className="map-pin pin-pop"
-                style={{ position:"absolute", left:px, top:py, transform:"translate(-50%,-100%)", zIndex:isHov?30:isMe?15:10, opacity:teamView&&!isMe?0.7:1 }}
-                onMouseEnter={()=>setHovered(pin.id)} onMouseLeave={()=>setHovered(null)}>
-                <PinShape shape={shape} color={color} size={isMe?20:16} />
-                {isHov && (
-                  <div style={{ position:"absolute", bottom:"115%", left:"50%", transform:"translateX(-50%)", background:"#09111f", border:`1px solid ${color}`, borderRadius:6, padding:"8px 12px", whiteSpace:"nowrap", fontSize:11, zIndex:50, pointerEvents:"none", boxShadow:`0 4px 20px ${color}44` }}>
-                    <div style={{ color, fontWeight:500, marginBottom:3 }}>{pin.city}</div>
-                    <div style={{ color:"#475569", fontSize:9, letterSpacing:1 }}>{PIN_TYPES[pin.type]?.label?.toUpperCase()} · {pin.date}</div>
-                    {teamView && <div style={{ color:color+"aa", fontSize:9, marginTop:2 }}>{owner?.name}</div>}
-                    {pin.note && <div style={{ color:"#64748b", marginTop:4, fontSize:10, maxWidth:180 }}>{pin.note}</div>}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+            {/* Drop cursor */}
+            {dropping && positions.__dropping && (
+              <div className="pulse" style={{ position:"absolute", left:positions.__dropping.x, top:positions.__dropping.y, width:13, height:13, borderRadius:"50%", background:me.color, border:"2px solid white", transform:"translate(-50%,-50%)", zIndex:40 }} />
+            )}
+          </div>
 
-          {/* Drop cursor */}
-          {dropping && (
-            <div className="pulse" style={{ position:"absolute", left:dropping.x, top:dropping.y, width:13, height:13, borderRadius:"50%", background:me.color, border:"2px solid white", transform:"translate(-50%,-50%)", pointerEvents:"none", zIndex:40 }} />
-          )}
+          <div style={{ position:"absolute", left:0, right:0, bottom:8, textAlign:"center", zIndex:15, pointerEvents:"none" }}>
+            <span style={{ color:"#0d1a2b", fontSize:8, fontFamily:"'DM Mono', monospace", letterSpacing:3, background:"#080c16cc", padding:"3px 8px", borderRadius:3 }}>SEARCH A PLACE OR CLICK THE MAP TO DROP A PIN</span>
+          </div>
         </div>
 
         {/* ── Sidebar ── */}
@@ -671,7 +592,28 @@ export default function App() {
           {panel==="add" && (
             <div style={{ padding:14, display:"flex", flexDirection:"column", gap:13, overflowY:"auto" }}>
               <div style={{ fontSize:9, color:dropping?"#475569":"#1e293b", letterSpacing:1 }}>
-                {dropping?`📍 ${dropping.lat.toFixed(1)}°, ${dropping.lng.toFixed(1)}°`:"← CLICK MAP TO SELECT SPOT"}
+                {dropping?`📍 ${dropping.lat.toFixed(3)}°, ${dropping.lng.toFixed(3)}°`:"search a place or click the map"}
+              </div>
+              <div style={{ position:"relative" }}>
+                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:6 }}>SEARCH LOCATION</div>
+                <input placeholder="Any city, town, or address..." value={search} onChange={e=>handleSearchChange(e.target.value)} />
+                {(searching || searchResults.length > 0) && (
+                  <div style={{ position:"absolute", top:"100%", left:0, right:0, marginTop:4, background:"#0f172a", border:"1px solid #1e293b", borderRadius:6, zIndex:60, maxHeight:220, overflowY:"auto", boxShadow:"0 8px 24px rgba(0,0,0,0.5)" }}>
+                    {searching && <div style={{ padding:"8px 10px", fontSize:10, color:"#334155" }}>searching...</div>}
+                    {!searching && searchResults.length === 0 && search.trim().length >= 3 && (
+                      <div style={{ padding:"8px 10px", fontSize:10, color:"#334155" }}>no matches</div>
+                    )}
+                    {!searching && searchResults.map((r, i) => (
+                      <button key={i} onClick={()=>pickSearchResult(r)}
+                        style={{ display:"block", width:"100%", textAlign:"left", padding:"8px 10px", background:"transparent", border:"none", borderBottom:i<searchResults.length-1?"1px solid #0f1c2e":"none", cursor:"pointer" }}
+                        onMouseEnter={e=>e.currentTarget.style.background="#0f1c2e"}
+                        onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                        <div style={{ fontSize:11, color:"#e2e8f0" }}>{shortLabel(r)}</div>
+                        <div style={{ fontSize:9, color:"#334155", marginTop:1, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{r.display_name}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:7 }}>CATEGORY</div>
@@ -686,7 +628,7 @@ export default function App() {
                 </div>
               </div>
               <div>
-                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:6 }}>CITY / LOCATION</div>
+                <div style={{ fontSize:9, color:"#334155", letterSpacing:2, marginBottom:6 }}>CITY / LOCATION LABEL</div>
                 <input placeholder="Austin, TX" value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value}))} onKeyDown={e=>e.key==="Enter"&&handleAddPin()} />
               </div>
               <div>
@@ -697,7 +639,7 @@ export default function App() {
                 style={{ padding:"11px", background:dropping&&form.city.trim()?me.color:"#0a1120", color:dropping&&form.city.trim()?"#fff":"#1e293b", border:"none", borderRadius:5, fontFamily:"'Bebas Neue'", fontSize:15, letterSpacing:3, cursor:dropping&&form.city.trim()?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:dropping&&form.city.trim()?`0 0 18px ${me.color}55`:"none" }}>
                 DROP PIN
               </button>
-              {!dropping&&<div style={{ fontSize:9, color:"#1e293b", textAlign:"center" }}>click the map first</div>}
+              {!dropping&&<div style={{ fontSize:9, color:"#1e293b", textAlign:"center" }}>search a place or click the map first</div>}
             </div>
           )}
 
