@@ -60,6 +60,53 @@ function PinShape({ shape, color, size = 20 }) {
   return null;
 }
 
+// Plain-HTML-string equivalents of PinShape, for Leaflet's native L.divIcon
+// (which renders raw HTML, not React) — used for actual map markers so
+// Leaflet handles their positioning natively instead of us recalculating
+// pixel coordinates by hand on every pan/zoom.
+function pinShapeHTML(shape, color, size = 20) {
+  const shadow = `filter:drop-shadow(0 2px 5px ${color}99);display:block;`;
+  if (shape === "pin") return `
+    <svg width="${size}" height="${size * 1.4}" viewBox="0 0 20 28" style="${shadow}">
+      <circle cx="10" cy="10" r="8" fill="${color}" opacity="0.15" />
+      <path d="M10 0C6.13 0 3 3.13 3 7c0 5.25 7 14 7 14s7-8.75 7-14c0-3.87-3.13-7-7-7z" fill="${color}" />
+      <circle cx="10" cy="7.5" r="2.8" fill="rgba(255,255,255,0.85)" />
+    </svg>`;
+  if (shape === "circle") return `
+    <svg width="${size}" height="${size}" viewBox="0 0 20 20" style="${shadow}">
+      <circle cx="10" cy="10" r="8" fill="${color}" opacity="0.15" />
+      <circle cx="10" cy="10" r="6" fill="${color}" />
+      <circle cx="10" cy="10" r="2.5" fill="rgba(255,255,255,0.85)" />
+    </svg>`;
+  if (shape === "diamond") return `
+    <svg width="${size}" height="${size}" viewBox="0 0 20 20" style="${shadow}">
+      <polygon points="10,1 19,10 10,19 1,10" fill="${color}" opacity="0.15" />
+      <polygon points="10,3 17,10 10,17 3,10" fill="${color}" />
+      <circle cx="10" cy="10" r="2.5" fill="rgba(255,255,255,0.85)" />
+    </svg>`;
+  return "";
+}
+
+function pinHeight(shape, size) {
+  return shape === "pin" ? size * 1.4 : size;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str ?? "";
+  return div.innerHTML;
+}
+
+function pinTooltipHTML(pin, color, teamView, ownerName) {
+  return `
+    <div style="background:#ffffff;border:1px solid ${color};border-radius:6px;padding:8px 12px;white-space:nowrap;font-size:11px;box-shadow:0 4px 20px ${color}44;font-family:'DM Mono',monospace;">
+      <div style="color:${color};font-weight:500;margin-bottom:3px;">${escapeHtml(pin.city)}</div>
+      <div style="color:#7686a0;font-size:9px;letter-spacing:1px;">${(PIN_TYPES[pin.type]?.label || "").toUpperCase()} · ${escapeHtml(pin.date)}</div>
+      ${teamView ? `<div style="color:${color}aa;font-size:9px;margin-top:2px;">${escapeHtml(ownerName)}</div>` : ""}
+      ${pin.note ? `<div style="color:#5b6b84;margin-top:4px;font-size:10px;max-width:180px;white-space:normal;">${escapeHtml(pin.note)}</div>` : ""}
+    </div>`;
+}
+
 // ─── Auth Screen ──────────────────────────────────────────────────────────────
 
 function AuthScreen() {
@@ -217,16 +264,16 @@ export default function App() {
   const [teamView, setTeamView]     = useState(false);
   const [dropping, setDropping]     = useState(null);
   const [form, setForm]             = useState({ type:"worked", city:"", note:"" });
-  const [hovered, setHovered]       = useState(null);
   const [panel, setPanel]           = useState("list");
   const [filterType, setFilterType] = useState("all");
   const [search, setSearch]         = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching]   = useState(false);
-  const [renderTick, setRenderTick] = useState(0); // bumped on leaflet pan/zoom to reposition pin overlay
-  const [positions, setPositions]   = useState({}); // pin id -> {x,y} in container pixels, plus __dropping
+  const [mapReady, setMapReady]     = useState(false); // flips true once leaflet actually exists — lets other effects know it's safe to use it
   const leafletRef   = useRef(null); // leaflet Map instance
   const cleanupRef   = useRef(null); // teardown for the current map instance
+  const markersRef   = useRef(new Map()); // pin.id -> native leaflet marker
+  const dropMarkerRef = useRef(null);      // native leaflet marker for the drop cursor
   const searchTimer  = useRef(null);
 
   // ── Auth listener ─────────────────────────────────────────────────────────
@@ -311,6 +358,7 @@ export default function App() {
       cleanupRef.current = null;
       leafletRef.current?.remove();
       leafletRef.current = null;
+      setMapReady(false);
       return;
     }
     if (leafletRef.current) return; // already initialized
@@ -332,8 +380,6 @@ export default function App() {
 
     L.control.zoom({ position: "bottomright" }).addTo(map);
 
-    const bump = () => setRenderTick(t => t + 1);
-    map.on("move zoom", bump);
     map.on("click", (e) => {
       setDropping({ lat: e.latlng.lat, lng: e.latlng.lng });
       setPanel("add");
@@ -342,7 +388,7 @@ export default function App() {
     });
 
     leafletRef.current = map;
-    bump();
+    setMapReady(true);
 
     // Belt-and-suspenders: re-measure shortly after mount and on any
     // container resize, in case layout hadn't fully settled yet.
@@ -432,23 +478,75 @@ export default function App() {
     return { ...u, uid, total:uPins.length, worked:uPins.filter(p=>p.type==="worked").length, layover:uPins.filter(p=>p.type==="layover").length, remote:uPins.filter(p=>p.type==="remote").length };
   }).sort((a,b) => b.worked - a.worked);
 
-  // Recompute on-screen pixel positions whenever the map pans/zooms
-  // (renderTick) or the visible pin set changes. Reading the leaflet ref
-  // here, inside an effect, keeps ref access out of the render path.
+  // Sync one native Leaflet marker per visible pin. Leaflet positions these
+  // itself on every pan/zoom — no manual pixel math, so this can't drift out
+  // of sync with the map the way a hand-tracked overlay position could.
   useEffect(() => {
     const map = leafletRef.current;
     if (!map) return;
-    const next = {};
-    filteredPins.forEach(p => {
-      const pt = map.latLngToContainerPoint([p.lat, p.lng]);
-      next[p.id] = { x: pt.x, y: pt.y };
+    const seen = new Set();
+
+    filteredPins.forEach(pin => {
+      seen.add(pin.id);
+      const owner = users[pin.userId] || me;
+      const color = owner?.color || "#47597a";
+      const isMe  = pin.userId === me?.id;
+      const shape = PIN_TYPES[pin.type]?.shape || "pin";
+      const size  = isMe ? 20 : 16;
+      const height = pinHeight(shape, size);
+      const icon = L.divIcon({
+        html: pinShapeHTML(shape, color, size),
+        className: "crew-pin-icon",
+        iconSize: [size, height],
+        iconAnchor: [size / 2, height],
+      });
+
+      let marker = markersRef.current.get(pin.id);
+      if (!marker) {
+        marker = L.marker([pin.lat, pin.lng], { icon })
+          .addTo(map)
+          .bindTooltip("", { direction: "top", offset: [0, -height], opacity: 1, className: "crew-pin-tooltip" });
+        markersRef.current.set(pin.id, marker);
+      } else {
+        marker.setLatLng([pin.lat, pin.lng]);
+        marker.setIcon(icon);
+      }
+      marker.setOpacity(teamView && !isMe ? 0.7 : 1);
+      marker.setTooltipContent(pinTooltipHTML(pin, color, teamView, owner?.name));
     });
-    if (dropping) {
-      const pt = map.latLngToContainerPoint([dropping.lat, dropping.lng]);
-      next.__dropping = { x: pt.x, y: pt.y };
+
+    // Remove markers for any pin no longer in the visible set (deleted, or
+    // filtered out by the category/team-view toggles).
+    markersRef.current.forEach((marker, id) => {
+      if (!seen.has(id)) {
+        map.removeLayer(marker);
+        markersRef.current.delete(id);
+      }
+    });
+  }, [mapReady, filteredPins, teamView, users, me]);
+
+  // Same idea for the pulsing "you're about to drop a pin here" cursor.
+  useEffect(() => {
+    const map = leafletRef.current;
+    if (!map) return;
+    if (dropping && me) {
+      const icon = L.divIcon({
+        html: `<div class="pulse" style="width:13px;height:13px;border-radius:50%;background:${me.color};border:2px solid white;"></div>`,
+        className: "",
+        iconSize: [13, 13],
+        iconAnchor: [6.5, 6.5],
+      });
+      if (!dropMarkerRef.current) {
+        dropMarkerRef.current = L.marker([dropping.lat, dropping.lng], { icon, interactive: false }).addTo(map);
+      } else {
+        dropMarkerRef.current.setLatLng([dropping.lat, dropping.lng]);
+        dropMarkerRef.current.setIcon(icon);
+      }
+    } else if (dropMarkerRef.current) {
+      map.removeLayer(dropMarkerRef.current);
+      dropMarkerRef.current = null;
     }
-    setPositions(next);
-  }, [renderTick, dropping, filteredPins]);
+  }, [mapReady, dropping, me]);
 
   // ── Render gates ──────────────────────────────────────────────────────────
 
@@ -471,12 +569,8 @@ export default function App() {
         * { box-sizing:border-box; margin:0; padding:0; }
         ::-webkit-scrollbar { width:3px; }
         ::-webkit-scrollbar-thumb { background:#dce3ec; border-radius:2px; }
-        .map-pin { transition:transform 0.15s ease; cursor:pointer; }
-        .map-pin:hover { transform:scale(1.4) translateY(-2px); }
-        .pin-pop { animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-        @keyframes popIn { from { transform:scale(0) translateY(8px); opacity:0; } to { transform:scale(1); opacity:1; } }
         .pulse { animation:pulse 1.8s infinite; }
-        @keyframes pulse { 0%,100% { opacity:1; transform:translate(-50%,-50%) scale(1); } 50% { opacity:0.4; transform:translate(-50%,-50%) scale(1.4); } }
+        @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(1.4); } }
         input, textarea { background:#f5f7fa; border:1px solid #dce3ec; color:#16233d; border-radius:5px; padding:8px 10px; font-family:'DM Mono',monospace; font-size:12px; width:100%; outline:none; }
         input:focus, textarea:focus { border-color:#9facc2; }
         textarea { resize:none; height:56px; }
@@ -492,6 +586,16 @@ export default function App() {
         .leaflet-control-zoom a:hover { background:#e7edf5 !important; color:#47597a !important; }
         .leaflet-control-attribution { background:#eef1f6cc !important; color:#9facc2 !important; font-size:9px !important; }
         .leaflet-control-attribution a { color:#7686a0 !important; }
+
+        /* Native pin markers — hover/pop effects go on the inner SVG, not the
+           marker div itself, since leaflet uses that div's own transform for
+           positioning and overriding it here would break placement. */
+        .crew-pin-icon { background:transparent; border:none; cursor:pointer; }
+        .crew-pin-icon svg { transition:transform 0.15s ease; transform-origin:50% 100%; animation:pinPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        .crew-pin-icon:hover svg { transform:scale(1.3); }
+        @keyframes pinPop { from { transform:scale(0); opacity:0; } to { transform:scale(1); opacity:1; } }
+        .crew-pin-tooltip.leaflet-tooltip { background:transparent !important; border:none !important; box-shadow:none !important; padding:0 !important; border-radius:0 !important; }
+        .crew-pin-tooltip.leaflet-tooltip::before { display:none !important; }
       `}</style>
 
       {/* ── Header ── */}
@@ -529,40 +633,11 @@ export default function App() {
         {/* ── Map ── */}
         <div style={{ flex:1, position:"relative", overflow:"hidden" }}>
 
-          {/* Leaflet mounts here — real tiles, every town and back road, native pan/zoom */}
+          {/* Leaflet mounts here — real tiles, every town and back road, native pan/zoom.
+              Pins and the drop cursor are added as native leaflet markers (see the two
+              effects above), not rendered here — that's what lets leaflet keep them
+              correctly positioned through every pan and zoom on its own. */}
           <div ref={initMapNode} style={{ position:"absolute", inset:0 }} />
-
-          {/* Overlay layer: our own pins, hover cards, drop cursor — positioned via leaflet's projection */}
-          <div style={{ position:"absolute", inset:0, pointerEvents:"none", zIndex:15 }}>
-            {filteredPins.map(pin => {
-              const { x:px, y:py } = positions[pin.id] || { x:-9999, y:-9999 };
-              const owner = users[pin.userId] || me;
-              const color = owner?.color || "#47597a";
-              const isMe  = pin.userId === me?.id;
-              const shape = PIN_TYPES[pin.type]?.shape || "pin";
-              const isHov = hovered === pin.id;
-              return (
-                <div key={pin.id} className="map-pin pin-pop"
-                  style={{ position:"absolute", left:px, top:py, transform:"translate(-50%,-100%)", zIndex:isHov?30:isMe?15:10, opacity:teamView&&!isMe?0.7:1, pointerEvents:"auto" }}
-                  onMouseEnter={()=>setHovered(pin.id)} onMouseLeave={()=>setHovered(null)}>
-                  <PinShape shape={shape} color={color} size={isMe?20:16} />
-                  {isHov && (
-                    <div style={{ position:"absolute", bottom:"115%", left:"50%", transform:"translateX(-50%)", background:"#ffffff", border:`1px solid ${color}`, borderRadius:6, padding:"8px 12px", whiteSpace:"nowrap", fontSize:11, zIndex:50, pointerEvents:"none", boxShadow:`0 4px 20px ${color}44` }}>
-                      <div style={{ color, fontWeight:500, marginBottom:3 }}>{pin.city}</div>
-                      <div style={{ color:"#7686a0", fontSize:9, letterSpacing:1 }}>{PIN_TYPES[pin.type]?.label?.toUpperCase()} · {pin.date}</div>
-                      {teamView && <div style={{ color:color+"aa", fontSize:9, marginTop:2 }}>{owner?.name}</div>}
-                      {pin.note && <div style={{ color:"#5b6b84", marginTop:4, fontSize:10, maxWidth:180 }}>{pin.note}</div>}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Drop cursor */}
-            {dropping && positions.__dropping && (
-              <div className="pulse" style={{ position:"absolute", left:positions.__dropping.x, top:positions.__dropping.y, width:13, height:13, borderRadius:"50%", background:me.color, border:"2px solid white", transform:"translate(-50%,-50%)", zIndex:40 }} />
-            )}
-          </div>
 
           <div style={{ position:"absolute", left:0, right:0, bottom:8, textAlign:"center", zIndex:15, pointerEvents:"none" }}>
             <span style={{ color:"#7686a0", fontSize:8, fontFamily:"'DM Mono', monospace", letterSpacing:3, background:"#ffffffcc", padding:"3px 8px", borderRadius:3 }}>SEARCH A PLACE OR CLICK THE MAP TO DROP A PIN</span>
@@ -603,8 +678,7 @@ export default function App() {
                 const t     = PIN_TYPES[pin.type];
                 const isMe  = pin.userId === me?.id;
                 return (
-                  <div key={pin.id} className="pin-row" style={{ padding:"9px 10px", borderBottom:"1px solid #e3e8ef", display:"flex", gap:8, alignItems:"flex-start" }}
-                    onMouseEnter={()=>setHovered(pin.id)} onMouseLeave={()=>setHovered(null)}>
+                  <div key={pin.id} className="pin-row" style={{ padding:"9px 10px", borderBottom:"1px solid #e3e8ef", display:"flex", gap:8, alignItems:"flex-start" }}>
                     <div style={{ marginTop:2, flexShrink:0 }}>
                       <PinShape shape={t.shape} color={color} size={12} />
                     </div>
