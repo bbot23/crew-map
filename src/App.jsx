@@ -269,6 +269,8 @@ export default function App() {
   const [search, setSearch]         = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching]   = useState(false);
+  const [saveError, setSaveError]   = useState(null); // shown in the + PIN panel if a save fails
+  const [saving, setSaving]         = useState(false); // true while a drop-pin insert is in flight
   const [mapReady, setMapReady]     = useState(false); // flips true once leaflet actually exists — lets other effects know it's safe to use it
   const [theme, setTheme]           = useState(() => {
     try { return localStorage.getItem("crewmap-theme") || "light"; } catch { return "light"; }
@@ -392,6 +394,7 @@ export default function App() {
       setPanel("add");
       setForm({ type: "worked", city: "", note: "" });
       setSearch(""); setSearchResults([]);
+      setSaveError(null);
     });
 
     leafletRef.current = map;
@@ -440,25 +443,29 @@ export default function App() {
     setDropping({ lat, lng });
     setForm(f => ({ ...f, city: shortLabel(r) }));
     setSearch(""); setSearchResults([]);
+    setSaveError(null);
     leafletRef.current?.flyTo([lat, lng], 12, { duration: 0.8 });
   };
 
   const handleAddPin = async () => {
     if (!dropping || !form.city.trim() || !me) return;
+    setSaveError(null);
+    setSaving(true);
     const pin = {
       user_id: me.id,
       lat: dropping.lat, lng: dropping.lng,
       type: form.type, city: form.city.trim(), note: form.note.trim(),
       date: new Date().toLocaleDateString("en-US", { month:"short", year:"numeric" }),
     };
+    const { data, error } = await supabase.from("pins").insert(pin).select().single();
+    setSaving(false);
+    if (error) {
+      setSaveError(error.message || "Something went wrong saving that pin — try again.");
+      return; // keep the form filled in and stay on this panel so nothing typed is lost
+    }
     setDropping(null);
     setForm({ type:"worked", city:"", note:"" });
     setPanel("list");
-    const { data, error } = await supabase.from("pins").insert(pin).select().single();
-    if (error) {
-      console.error("Failed to save pin:", error.message);
-      return;
-    }
     // Draw it immediately from this response — don't wait on the realtime
     // subscription to echo it back, since that channel can silently miss
     // events (e.g. right after the database wakes from being paused).
@@ -801,9 +808,14 @@ export default function App() {
                 <div style={{ fontSize:9, color:"var(--label-dim)", letterSpacing:2, marginBottom:6 }}>NOTE (OPTIONAL)</div>
                 <textarea placeholder="Brewery install, day 2..." value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} />
               </div>
-              <button onClick={handleAddPin} disabled={!dropping||!form.city.trim()}
-                style={{ padding:"11px", background:dropping&&form.city.trim()?me.color:"var(--bg-disabled)", color:dropping&&form.city.trim()?"#fff":"var(--border)", border:"none", borderRadius:5, fontFamily:"'Bebas Neue'", fontSize:15, letterSpacing:3, cursor:dropping&&form.city.trim()?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:dropping&&form.city.trim()?`0 0 18px ${me.color}55`:"none" }}>
-                DROP PIN
+              {saveError && (
+                <div style={{ fontSize:10, color:"#ef4444", background:"#ef444411", border:"1px solid #ef444430", borderRadius:5, padding:"8px 10px" }}>
+                  Didn't save: {saveError}
+                </div>
+              )}
+              <button onClick={handleAddPin} disabled={!dropping||!form.city.trim()||saving}
+                style={{ padding:"11px", background:dropping&&form.city.trim()&&!saving?me.color:"var(--bg-disabled)", color:dropping&&form.city.trim()&&!saving?"#fff":"var(--border)", border:"none", borderRadius:5, fontFamily:"'Bebas Neue'", fontSize:15, letterSpacing:3, cursor:dropping&&form.city.trim()&&!saving?"pointer":"not-allowed", transition:"all 0.2s", boxShadow:dropping&&form.city.trim()&&!saving?`0 0 18px ${me.color}55`:"none" }}>
+                {saving ? "SAVING..." : "DROP PIN"}
               </button>
               {!dropping&&<div style={{ fontSize:9, color:"var(--text-muted)", textAlign:"center" }}>search a place or click the map first</div>}
             </div>
