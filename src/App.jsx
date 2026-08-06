@@ -580,7 +580,7 @@ export default function App() {
   // ── Main UI ───────────────────────────────────────────────────────────────
 
   return (
-    <div data-theme={theme} style={{ fontFamily:"'DM Mono', monospace", background:"var(--bg)", color:"var(--text-primary)", height:"100vh", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+    <div data-theme={theme} className="cm-root" style={{ fontFamily:"'DM Mono', monospace", background:"var(--bg)", color:"var(--text-primary)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap');
         :root {
@@ -600,6 +600,7 @@ export default function App() {
           --divider:#1c2433; --chip-bg:#1a2332cc; --badge-bg:#2c384a22; --badge-border:#38465a33;
         }
         * { box-sizing:border-box; margin:0; padding:0; }
+        .cm-root { height:100vh; height:100dvh; }
         ::-webkit-scrollbar { width:3px; }
         ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
         .pulse { animation:pulse 1.8s infinite; }
@@ -622,6 +623,20 @@ export default function App() {
         .leaflet-tile-pane { filter:brightness(0.97) saturate(0.92); }
         [data-theme="dark"] .leaflet-tile-pane { filter:brightness(1.35) contrast(0.85) saturate(0.85); }
 
+        /* ── Responsive: phones and narrow windows ──────────────────────── */
+        @media (max-width: 760px) {
+          .cm-header { flex-wrap:wrap; row-gap:8px; padding:8px 12px; }
+          .cm-header-spacer { display:none; }
+          .cm-body { flex-direction:column; }
+          .cm-map { flex:none; width:100%; height:44vh; }
+          .cm-sidebar { width:100% !important; flex:1; border-left:none !important; border-top:1px solid var(--hover); }
+        }
+        @media (max-width: 460px) {
+          .cm-wordmark { font-size:16px !important; letter-spacing:2px !important; }
+          .cm-subtitle { display:none; }
+          .cm-pincount, .cm-pincount-dot { display:none; }
+        }
+
         /* Native pin markers — hover/pop effects go on the inner SVG, not the
            marker div itself, since leaflet uses that div's own transform for
            positioning and overriding it here would break placement. */
@@ -634,10 +649,10 @@ export default function App() {
       `}</style>
 
       {/* ── Header ── */}
-      <div style={{ background:"var(--panel)", borderBottom:"1px solid var(--hover)", padding:"9px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+      <div className="cm-header" style={{ background:"var(--panel)", borderBottom:"1px solid var(--hover)", padding:"9px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue'", fontSize:20, letterSpacing:4, color:"var(--text-bright)" }}>CREW MAP</div>
-          <div style={{ fontSize:9, color:"var(--border-muted)", letterSpacing:2 }}>APOS JOB TRACKER</div>
+          <div className="cm-wordmark" style={{ fontFamily:"'Bebas Neue'", fontSize:20, letterSpacing:4, color:"var(--text-bright)" }}>CREW MAP</div>
+          <div className="cm-subtitle" style={{ fontSize:9, color:"var(--border-muted)", letterSpacing:2 }}>APOS JOB TRACKER</div>
         </div>
 
         <div onClick={()=>setTeamView(v=>!v)} style={{ display:"flex", alignItems:"center", gap:7, cursor:"pointer", background:teamView?"var(--hover)":"transparent", border:`1px solid ${teamView?"var(--border-muted)":"var(--hover)"}`, borderRadius:20, padding:"5px 12px", marginLeft:4, transition:"all 0.2s" }}>
@@ -645,14 +660,14 @@ export default function App() {
           <span style={{ fontSize:9, color:teamView?"var(--text-body)":"var(--label-dim)", letterSpacing:1 }}>{teamView?"TEAM VIEW ON":"MY VIEW"}</span>
         </div>
 
-        <div style={{ flex:1 }} />
+        <div className="cm-header-spacer" style={{ flex:1 }} />
 
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", rowGap:6 }}>
           <div style={{ width:9, height:9, borderRadius:"50%", background:me.color, boxShadow:`0 0 8px ${me.color}` }} />
           <span style={{ fontSize:11, color:"var(--text-prominent)" }}>{me.name}</span>
           <span style={{ fontSize:9, color:me.pos==="toast"?"#ff6c2f":"var(--text-prominent)", background:me.pos==="toast"?"#ff6c2f18":"var(--border)", border:`1px solid ${me.pos==="toast"?"#ff6c2f44":"var(--label-dim)"}`, borderRadius:4, padding:"1px 6px", letterSpacing:1 }}>{me.pos==="toast"?"TOAST":"SQUARE"}</span>
-          <span style={{ fontSize:10, color:"var(--border)" }}>·</span>
-          <span style={{ fontSize:10, color:"var(--text-muted)" }}>
+          <span className="cm-pincount-dot" style={{ fontSize:10, color:"var(--border)" }}>·</span>
+          <span className="cm-pincount" style={{ fontSize:10, color:"var(--text-muted)" }}>
             {myPins.filter(p=>p.type==="worked").length}▼ {myPins.filter(p=>p.type==="layover").length}● {myPins.filter(p=>p.type==="remote").length}◆
           </span>
           <button onClick={()=>setTheme(t => t === "dark" ? "light" : "dark")} title={theme==="dark" ? "Switch to light mode" : "Switch to dark mode"}
@@ -667,10 +682,10 @@ export default function App() {
       </div>
 
       {/* ── Body ── */}
-      <div style={{ flex:1, display:"flex", overflow:"hidden" }}>
+      <div className="cm-body" style={{ flex:1, display:"flex", overflow:"hidden" }}>
 
         {/* ── Map ── */}
-        <div style={{ flex:1, position:"relative", overflow:"hidden" }}>
+        <div className="cm-map" style={{ flex:1, position:"relative", overflow:"hidden" }}>
 
           {/* Leaflet mounts here — real tiles, every town and back road, native pan/zoom.
               Pins and the drop cursor are added as native leaflet markers (see the two
@@ -684,7 +699,7 @@ export default function App() {
         </div>
 
         {/* ── Sidebar ── */}
-        <div style={{ width:268, background:"var(--panel)", borderLeft:"1px solid var(--hover)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
+        <div className="cm-sidebar" style={{ width:268, background:"var(--panel)", borderLeft:"1px solid var(--hover)", display:"flex", flexDirection:"column", overflow:"hidden" }}>
 
           {/* Tabs */}
           <div style={{ display:"flex", borderBottom:"1px solid var(--hover)", flexShrink:0 }}>
